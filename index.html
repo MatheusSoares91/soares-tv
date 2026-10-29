@@ -605,7 +605,7 @@
     }
 
     /* ==========================================================================
-       4. PRO MEDIA PLAYER ENGINE & RENDER PROXY ROUTING
+       4. PRO MEDIA PLAYER ENGINE & AUTOMATIC RETRY SYSTEM (COM PROXY DA RENDER)
        ========================================================================== */
     function stopCurrentPlayers() {
       if (state.hlsInstance) {
@@ -742,7 +742,7 @@
       }
     }
 
-    // Funções utilitárias auxiliares do seu escopo
+    // Funções auxiliares mantidas intactas
     function escapeHtml(str) {
       return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
@@ -751,7 +751,7 @@
     }
     function updateFavButtonState() {}
     function addToHistory() {}
-    function handlePlaybackError(index, msg, opts) {
+    function handlePlaybackError(index, msg) {
       hidePlayerLoader();
       showStatusAlert(`Erro: ${msg}`);
     }
