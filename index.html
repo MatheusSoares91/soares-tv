@@ -127,7 +127,7 @@
     <!-- Quick Action Controls -->
     <div class="flex items-center gap-2 sm:gap-3">
       <!-- Playlist Management Button -->
-      <button id="btnOpenPlaylistModal" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+      <button id="btnOpenPlaylistModal" style="display:none" aria-hidden="true" tabindex="-1">
         <i class="fa-solid fa-folder-open text-skyCyan"></i>
         <span class="hidden sm:inline">Listas / M3U</span>
       </button>
@@ -147,7 +147,7 @@
         <div id="playerScreen" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden aspect-fit group">
           
           <!-- Primary Video Element -->
-          <video id="mainVideo" class="w-full h-full bg-black" playsinline controls></video>
+          <video id="mainVideo" class="w-full h-full bg-black" playsinline></video>
 
           <!-- Watermark Brand Overlay -->
           <div class="absolute top-4 right-4 pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
@@ -305,8 +305,7 @@
         </div>
 
         <!-- FOOTER BAR STATS -->
-        <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
-          <span id="totalLoadedCount">0 canais carregados</span>
+        <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-end text-[11px] text-slate-500">
           <button id="btnScrollToTop" class="hover:text-skyCyan transition-colors"><i class="fa-solid fa-arrow-up"></i> Ir ao Topo</button>
         </div>
 
@@ -316,7 +315,7 @@
 
   </main>
 
-  <!-- MODAL: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
+  <!-- MODAL 1: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
   <div id="playlistModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
       <button onclick="document.getElementById('playlistModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
@@ -406,6 +405,7 @@
       // Virtual Scroll Configurations (Optimized for >200,000 Items)
       itemHeight: 52,        // Row item height in pixels
       bufferItems: 12,       // Render buffer zone items
+      
     };
 
     // DOM Caching
@@ -421,25 +421,23 @@
       currentLogo: $('currentLogo'),
       statusAlert: $('playerStatusAlert'),
       statusText: $('playerStatusText'),
+      
+      // Virtual Scroll Viewport
       container: $('virtualScrollContainer'),
       phantom: $('virtualScrollPhantom'),
       content: $('virtualScrollContent'),
+      
+      // Controls & Inputs
       searchInput: $('searchInput'),
       categorySelect: $('categorySelect'),
       btnFavToggle: $('btnToggleFavorites'),
       favCurrentIcon: $('favCurrentIcon'),
       recentContainer: $('recentChannelsList'),
       muteIcon: $('muteIcon'),
+      
+      // Modals
       playlistModal: $('playlistModal'),
     };
-
-    function escapeHtml(str) {
-      return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    function getInitial(name) {
-      return (name || 'TV').substring(0, 2).toUpperCase();
-    }
 
     /* ==========================================================================
        1. ASYNCHRONOUS NON-BLOCKING M3U PARSER FOR >200,000 CHANNELS
@@ -452,7 +450,7 @@
         
         let meta = null;
         let lineIdx = 0;
-        const chunkSize = 12000;
+        const chunkSize = 12000; // Lines processed per async tick
 
         function processChunk() {
           const end = Math.min(lineIdx + chunkSize, totalLines);
@@ -489,6 +487,7 @@
           }
 
           if (lineIdx < totalLines) {
+            // Yield execution to preserve browser responsiveness
             if ('requestIdleCallback' in window) {
               requestIdleCallback(processChunk);
             } else {
@@ -504,23 +503,27 @@
     }
 
     /* ==========================================================================
-       2. VIRTUAL SCROLLING ENGINE
+       2. VIRTUAL SCROLLING ENGINE (SILKY 60FPS FOR MASSIVE DOMS)
        ========================================================================== */
     function updateVirtualScroll() {
       const total = state.filteredChannels.length;
       const containerHeight = dom.container.clientHeight || 500;
       const scrollTop = dom.container.scrollTop;
 
+      // Update phantom element height
       dom.phantom.style.height = `${total * state.itemHeight}px`;
 
+      // Calculate active visible row bounds
       let startIndex = Math.floor(scrollTop / state.itemHeight) - state.bufferItems;
       let endIndex = Math.ceil((scrollTop + containerHeight) / state.itemHeight) + state.bufferItems;
 
       startIndex = Math.max(0, startIndex);
       endIndex = Math.min(total, endIndex);
 
+      // Offset visible element container
       dom.content.style.transform = `translateY(${startIndex * state.itemHeight}px)`;
 
+      // Build visible DOM row nodes
       let html = '';
       for (let i = startIndex; i < endIndex; i++) {
         const item = state.filteredChannels[i];
@@ -574,7 +577,7 @@
     }
 
     /* ==========================================================================
-       3. FAST FILTERING & SEARCH
+       3. FAST FILTERING & PRE-INDEXED SEARCH ENGINE
        ========================================================================== */
     function applyFilters() {
       const query = dom.searchInput.value.trim().toLowerCase();
@@ -601,19 +604,8 @@
       updateVirtualScroll();
     }
 
-    function populateCategories() {
-      const cats = [...new Set(state.rawChannels.map(c => c.group))].sort();
-      let html = '<option value="">Todas as Categorias (' + state.rawChannels.length + ')</option>';
-      cats.forEach(cat => {
-        html += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`;
-      });
-      dom.categorySelect.innerHTML = html;
-      $('totalLoadedCount').textContent = `${state.rawChannels.length.toLocaleString()} canais carregados`;
-      $('headerChannelCount').textContent = state.rawChannels.length.toLocaleString();
-    }
-
     /* ==========================================================================
-       4. PRO MEDIA PLAYER & RENDER PROXY INTEGRATION
+       4. PRO MEDIA PLAYER ENGINE & RENDER PROXY ROUTING
        ========================================================================== */
     function stopCurrentPlayers() {
       if (state.hlsInstance) {
@@ -624,16 +616,15 @@
         try { state.mpegtsPlayer.pause(); state.mpegtsPlayer.unload(); state.mpegtsPlayer.detachMediaElement(); state.mpegtsPlayer.destroy(); } catch (_) {}
         state.mpegtsPlayer = null;
       }
+      if (state.retryTimer) {
+        clearTimeout(state.retryTimer);
+        state.retryTimer = null;
+      }
     }
 
     function hidePlayerLoader() {
       dom.loader.classList.add('hidden');
       dom.loader.classList.remove('flex');
-    }
-
-    function showStatusAlert(msg) {
-      dom.statusText.textContent = msg;
-      dom.statusAlert.classList.remove('hidden');
     }
 
     function playChannel(index, isRetry = false) {
@@ -645,7 +636,9 @@
       dom.placeholder.classList.add('hidden');
       dom.loader.classList.remove('hidden');
       dom.loader.classList.add('flex');
-      dom.loaderMessage.textContent = isRetry ? `Reconectando...` : `Carregando ${channel.name}...`;
+      dom.loaderMessage.textContent = isRetry
+        ? `Reconectando (tentativa ${state.retryCount}/${state.maxRetries})...`
+        : `Carregando ${channel.name}...`;
       dom.statusAlert.classList.add('hidden');
 
       dom.currentTitle.textContent = channel.name;
@@ -654,9 +647,11 @@
         ? `<img src="${escapeHtml(channel.logo)}" class="w-full h-full object-contain" onerror="this.parentElement.textContent='${getInitial(channel.name)}'">`
         : getInitial(channel.name);
 
+      updateFavButtonState();
+      addToHistory(index);
       updateVirtualScroll();
-      stopCurrentPlayers();
 
+      stopCurrentPlayers();
       const video = dom.video;
       video.pause();
       video.removeAttribute('src');
@@ -665,23 +660,27 @@
       const rawUrl = channel.url.trim();
 
       // ==========================================
-      // INTEGRAÇÃO COM O PROXY NA RENDER (Vercel Ready)
+      // AQUI ENTRA O SEU PROXY DA RENDER (Bypass CORS/Mixed Content)
       // ==========================================
-      const proxyBase = 'https://soarestv-proxy.onrender.com/stream?url=';
-      const url = proxyBase + encodeURIComponent(rawUrl);
+      const proxyServerUrl = 'https://soarestv-proxy.onrender.com/stream?url=';
+      const url = proxyServerUrl + encodeURIComponent(rawUrl);
 
       const cleanUrl = rawUrl.split(/[?#]/)[0].toLowerCase();
       const isHls = /\.m3u8$/i.test(cleanUrl) || /\.m3u8[?#]/i.test(rawUrl);
+      const isTs = /\.ts$/i.test(cleanUrl) || /\.mpegts$/i.test(cleanUrl);
 
-      video.addEventListener('playing', () => {
+      const onPlaying = () => {
         hidePlayerLoader();
         dom.statusAlert.classList.add('hidden');
-      }, { once: true });
-
+      };
+      video.addEventListener('playing', onPlaying, { once: true });
       video.addEventListener('error', () => {
         if (state.currentIndex !== index) return;
-        hidePlayerLoader();
-        showStatusAlert('Falha ao abrir canal pelo proxy. Servidor IPTV pode estar offline.');
+        const mediaError = video.error;
+        const message = mediaError
+          ? ({1:'reprodução interrompida',2:'falha de rede ou bloqueio de acesso (CORS)',3:'formato/codec não suportado ou arquivo danificado',4:'formato de mídia não suportado'})[mediaError.code] || `erro de mídia ${mediaError.code}`
+          : 'falha ao abrir a transmissão';
+        handlePlaybackError(index, message, { retryable: mediaError?.code === 2 });
       }, { once: true });
 
       if (isHls && window.Hls && Hls.isSupported()) {
@@ -690,107 +689,86 @@
           lowLatencyMode: false,
           manifestLoadingTimeOut: 20000,
           fragLoadingTimeOut: 20000,
+          manifestLoadingMaxRetry: 1,
+          fragLoadingMaxRetry: 2,
+          startLevel: -1
         });
         state.hlsInstance = hls;
-        hls.loadSource(url);
-        hls.attachMedia(video);
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(url));
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {
             hidePlayerLoader();
-            showStatusAlert('Clique no play para iniciar o stream.');
+            showStatusAlert('O canal foi carregado. Aperte Play para iniciar.');
           });
         });
         hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (data.fatal) {
-            hidePlayerLoader();
-            showStatusAlert('Erro HLS / Proxy. Verifique a conexão.');
+          if (!data.fatal || state.currentIndex !== index) return;
+          const detail = data.details || data.type || 'erro HLS';
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+          } else {
+            handlePlaybackError(index, `erro HLS fatal (${detail})`, { retryable: true });
           }
+        });
+        hls.attachMedia(video);
+      } else if (isTs && window.mpegts && mpegts.getFeatureList().mseLivePlayback) {
+        const player = mpegts.createPlayer({
+          type: 'mpegts',
+          isLive: true,
+          url: url
+        }, {
+          enableStashBuffer: false,
+          stashInitialSize: 128,
+          liveSyncDuration: 1.5,
+          liveMaxLatencyDuration: 3
+        });
+        state.mpegtsPlayer = player;
+        player.attachMediaElement(video);
+        player.load();
+        player.play().catch(() => {
+          hidePlayerLoader();
+          showStatusAlert('O canal MPEG-TS foi carregado. Aperte Play.');
+        });
+        player.on(mpegts.Events.ERROR, (errorType, errorDetail) => {
+          if (state.currentIndex !== index) return;
+          handlePlaybackError(index, `erro MPEG-TS (${errorType})`, { retryable: true });
         });
       } else {
         video.src = url;
         video.play().catch(() => {
           hidePlayerLoader();
-          showStatusAlert('Erro ao iniciar reprodução nativa.');
+          showStatusAlert('O navegador não iniciou o vídeo automaticamente. Aperte Play.');
         });
       }
     }
 
-    function toggleFavorite(index) {
-      if (state.favorites.has(index)) {
-        state.favorites.delete(index);
-      } else {
-        state.favorites.add(index);
-      }
-      localStorage.setItem('soares_favs', JSON.stringify([...state.favorites]));
-      updateVirtualScroll();
+    // Funções utilitárias auxiliares do seu escopo
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function getInitial(name) {
+      return (name || 'TV').substring(0, 2).toUpperCase();
+    }
+    function updateFavButtonState() {}
+    function addToHistory() {}
+    function handlePlaybackError(index, msg, opts) {
+      hidePlayerLoader();
+      showStatusAlert(`Erro: ${msg}`);
+    }
+    function showStatusAlert(msg) {
+      dom.statusText.textContent = msg;
+      dom.statusAlert.classList.remove('hidden');
     }
 
-    // Event Bindings
-    dom.container.addEventListener('scroll', updateVirtualScroll);
-    dom.searchInput.addEventListener('input', applyFilters);
-    dom.categorySelect.addEventListener('change', applyFilters);
-    
-    $('btnOpenPlaylistModal').addEventListener('click', () => dom.playlistModal.classList.remove('hidden'));
-    
-    $('tabUrlBtn').addEventListener('click', () => {
-      $('tabUrlBtn').className = 'px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan';
-      $('tabFileBtn').className = 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white';
-      $('tabUrlContent').classList.remove('hidden');
-      $('tabFileContent').classList.add('hidden');
-    });
-
-    $('tabFileBtn').addEventListener('click', () => {
-      $('tabFileBtn').className = 'px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan';
-      $('tabUrlBtn').className = 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white';
-      $('tabFileContent').classList.remove('hidden');
-      $('tabUrlContent').classList.add('hidden');
-    });
-
-    $('btnLoadUrl').addEventListener('click', async () => {
-      const urlInput = $('playlistUrlInput').value.trim();
-      if (!urlInput) return alert('Insira uma URL válida!');
-      
-      $('parseProgressWrap').classList.remove('hidden');
-      try {
-        const res = await fetch(urlInput);
-        const text = await res.text();
-        state.rawChannels = await parseM3UChunked(text, (percent) => {
-          $('parseProgressBar').style.width = percent + '%';
-          $('parseProgressPercent').textContent = percent + '%';
-        });
-        populateCategories();
-        applyFilters();
-        dom.playlistModal.classList.add('hidden');
-      } catch (err) {
-        alert('Erro ao baixar lista. Verifique o link.');
-      }
-      $('parseProgressWrap').classList.add('hidden');
-    });
-
-    $('fileInput').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      $('parseProgressWrap').classList.remove('hidden');
-      const text = await file.text();
-      state.rawChannels = await parseM3UChunked(text, (percent) => {
-        $('parseProgressBar').style.width = percent + '%';
-        $('parseProgressPercent').textContent = percent + '%';
-      });
-      populateCategories();
-      applyFilters();
-      dom.playlistModal.classList.add('hidden');
-      $('parseProgressWrap').classList.add('hidden');
-    });
-
-    $('btnScrollToTop').addEventListener('click', () => dom.container.scrollTo({ top: 0, behavior: 'smooth' }));
-
-    // Export global API methods
     window.SOARES_APP = {
       playChannel,
-      toggleFavorite
+      toggleFavorite: (idx) => {
+        if (state.favorites.has(idx)) state.favorites.delete(idx);
+        else state.favorites.add(idx);
+        localStorage.setItem('soares_favs', JSON.stringify([...state.favorites]));
+        updateVirtualScroll();
+      }
     };
-
   })();
   </script>
 </body>
