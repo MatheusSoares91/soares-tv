@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOARES TV — Player de canais</title>
+  <meta name="theme-color" content="#070b14">
+  
+  <!-- Players para formatos de transmissão compatíveis com navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.js"></script>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            skyNavyBg: '#070b14',
+            skyCard: '#0f172a',
+            skyCardHover: '#1e293b',
+            skyBorder: '#1e293b',
+            skyCyan: '#38bdf8',
+            skyBlue: '#0284c7',
+            skyAccent: '#36d399',
+            skyPurple: '#818cf8',
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 25px -5px rgba(56, 189, 248, 0.35)',
+            'glow-accent': '0 0 25px -5px rgba(54, 211, 153, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070b14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-header {
+      background: rgba(7, 11, 20, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Video Aspect Ratios */
+    .aspect-fit video { object-fit: contain; }
+    .aspect-fill video { object-fit: cover; }
+    .aspect-16-9 video { object-fit: fill; }
+    .aspect-4-3 video { object-fit: fill; }
+
+    /* Keyframe Animations */
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+
+<body class="bg-skyNavyBg text-slate-100 font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-skyCyan selection:text-black">
+
+  <!-- TOP HEADER / BRAND NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 glass-header border-b border-slate-800/80 px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
+    
+    <!-- SOARES TV Brand Logo -->
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-skyBlue via-skyCyan to-skyAccent flex items-center justify-center text-slate-950 font-black text-xl shadow-glow-cyan">
+        <i class="fa-solid fa-play ml-0.5"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-xl tracking-tight text-white">SOARES <span class="bg-gradient-to-r from-skyCyan to-skyAccent bg-clip-text text-transparent">TV</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center System Operational Indicator -->
+    <div class="hidden md:flex items-center gap-6 text-xs">
+      <div class="flex items-center gap-2 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#36d399]"></span>
+        <span class="text-slate-300 font-bold tracking-wide uppercase text-[10px]">SISTEMA OPERACIONAL</span>
+      </div>
+      <div class="text-slate-400 text-xs">
+        Canais carregados: <strong id="headerChannelCount" class="text-skyCyan font-bold">0</strong>
+      </div>
+    </div>
+
+    <!-- Quick Action Controls -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Playlist Management Button -->
+      <button id="btnOpenPlaylistModal" style="display:none" aria-hidden="true" tabindex="-1">
+        <i class="fa-solid fa-folder-open text-skyCyan"></i>
+        <span class="hidden sm:inline">Listas / M3U</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APPLICATION GRID CONTAINER -->
+  <main class="flex-1 max-w-[1920px] w-full mx-auto p-3 sm:p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    
+    <!-- LEFT PANEL: MEDIA PLAYER & CONTROLS (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-4 lg:sticky lg:top-[73px]">
+      
+      <!-- PLAYER CARD CONTAINER -->
+      <div class="glass-panel rounded-2xl p-2 sm:p-3 shadow-2xl relative overflow-hidden group">
+        
+        <!-- Screen Container with Dynamic Aspect Ratios -->
+        <div id="playerScreen" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden aspect-fit group">
+          
+          <!-- Primary Video Element -->
+          <video id="mainVideo" class="w-full h-full bg-black" playsinline></video>
+
+          <!-- Watermark Brand Overlay -->
+          <div class="absolute top-4 right-4 pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+            <span class="font-black text-xs text-white tracking-wider">SOARES<span class="text-skyCyan">TV</span></span>
+          </div>
+
+          <!-- Screen Placeholder (No Active Channel) -->
+          <div id="playerPlaceholder" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-10 transition-opacity">
+            <div class="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 text-skyCyan text-3xl shadow-glow-cyan animate-pulse">
+              <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-white mb-2">Pronto para Transmitir</h2>
+            <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
+              Os canais do catálogo SOARES TV já estão carregados. Escolha um canal na lista ao lado para começar a assistir.
+            </p>
+          </div>
+
+          <!-- Loading Spinner Overlay -->
+          <div id="playerLoader" class="absolute inset-0 bg-black/75 backdrop-blur-sm hidden flex-col items-center justify-center z-20">
+            <div class="w-12 h-12 border-4 border-skyCyan/20 border-t-skyCyan rounded-full animate-spin mb-3"></div>
+            <p id="loaderMessage" class="text-xs font-semibold text-slate-200">Sincronizando com a transmissão...</p>
+          </div>
+
+        </div>
+
+        <!-- PLAYER BOTTOM CONTROL BAR -->
+        <div class="mt-3 px-1 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3">
+          
+          <!-- Selected Channel Meta Information -->
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div id="currentLogo" class="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 overflow-hidden font-bold text-skyCyan text-sm">
+              TV
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 id="currentChannelTitle" class="font-bold text-sm text-white truncate">Nenhum canal selecionado</h3>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span id="currentChannelCategory" class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded-md border border-slate-700 font-medium truncate max-w-[160px]">
+                  Aguardando seleção
+                </span>
+                <span id="streamQualityBadge" class="hidden bg-skyCyan/10 text-skyCyan text-[10px] px-2 py-0.5 rounded font-mono font-bold border border-skyCyan/30">
+                  AUTO HD
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Player Control Action Icons -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Toggle Favorite Button -->
+            <button id="btnFavCurrent" title="Favoritar Canal" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-colors border border-slate-700">
+              <i class="fa-regular fa-star text-sm" id="favCurrentIcon"></i>
+            </button>
+
+            <!-- Toggle Mute Button -->
+            <button id="btnMute" title="Mutar / Desmutar (M)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
+              <i class="fa-solid fa-volume-high text-sm" id="muteIcon"></i>
+            </button>
+
+            <!-- Aspect Ratio Switcher -->
+            <button id="btnAspectRatio" title="Proporção da Tela" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
+              <i class="fa-solid fa-expand text-sm"></i>
+            </button>
+
+            <!-- Picture in Picture Mode -->
+            <button id="btnPip" title="Picture in Picture (P)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
+              <i class="fa-solid fa-images text-sm"></i>
+            </button>
+
+            <!-- Fullscreen Mode -->
+            <button id="btnFullscreen" title="Tela Cheia (F)" class="w-9 h-9 rounded-lg bg-skyCyan/10 hover:bg-skyCyan/20 text-skyCyan flex items-center justify-center transition-colors border border-skyCyan/30">
+              <i class="fa-solid fa-maximize text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stream Error Alert Banner -->
+        <div id="playerStatusAlert" class="mt-2 text-[11px] px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-300 hidden border border-rose-500/20 flex items-center justify-between">
+          <span id="playerStatusText" class="truncate">Status: OK</span>
+          <button onclick="this.parentElement.classList.add('hidden')" class="text-rose-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- RECENTLY WATCHED CAROUSEL PANEL -->
+      <div class="glass-panel rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-skyCyan"></i> Assistidos Recentemente
+          </h4>
+          <button id="btnClearHistory" class="text-[11px] text-slate-500 hover:text-rose-400 transition-colors">Limpar Histórico</button>
+        </div>
+        <div id="recentChannelsList" class="flex gap-2 overflow-x-auto pb-1 text-xs">
+          <p class="text-slate-500 text-[11px] italic py-2">Nenhum canal assistido recentemente.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL: HIGH PERFORMANCE VIRTUAL SCROLL EXPLORER (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
+      
+      <div class="glass-panel rounded-2xl p-4 flex flex-col h-[calc(100vh-110px)] max-h-[880px] min-h-[550px]">
+        
+        <!-- SEARCH & FILTER CONTROLS BAR -->
+        <div class="space-y-3 mb-3 pb-3 border-b border-slate-800/80">
+          
+          <!-- Search Input Field -->
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input id="searchInput" type="text" placeholder="Buscar canais carregados..." 
+              class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs pl-9 pr-8 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan focus:ring-1 focus:ring-skyCyan transition-all">
+            <button id="btnClearSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Category Select Dropdown & Quick Favorite Filter -->
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <select id="categorySelect" class="w-full appearance-none bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan transition-all cursor-pointer truncate pr-8">
+                <option value="">Todas as Categorias (0)</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+            </div>
+
+            <!-- Favorites Only Filter Toggle -->
+            <button id="btnToggleFavorites" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-all">
+              <i class="fa-solid fa-star text-xs"></i>
+              <span class="hidden sm:inline">Favoritos</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Channel Metrics Header -->
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+            <span id="filteredCountLabel">Exibindo 0 canais</span>
+            <span id="parseStatusBadge" class="text-skyCyan font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-database text-[10px]"></i> Pronto
+            </span>
+          </div>
+        </div>
+
+        <!-- LIST HEADER TITLES -->
+        <div class="flex items-center justify-between px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800/50 mb-1">
+          <span>Canal / Categoria</span>
+          <span>Ação</span>
+        </div>
+
+        <!-- VIRTUAL SCROLL CONTAINER (Engine for 200,000+ Items) -->
+        <div id="virtualScrollContainer" class="flex-1 overflow-y-auto relative pr-1">
+          <!-- Total Scroll Placeholder Height -->
+          <div id="virtualScrollPhantom" class="absolute left-0 top-0 w-full pointer-events-none" style="height: 0px;"></div>
+          <!-- Actual Visible Rendered Container -->
+          <div id="virtualScrollContent" class="absolute left-0 top-0 w-full flex flex-col gap-1">
+            <!-- Channels dynamically rendered via Virtual Scroll Engine -->
+          </div>
+        </div>
+
+        <!-- FOOTER BAR STATS -->
+        <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-end text-[11px] text-slate-500">
+          <button id="btnScrollToTop" class="hover:text-skyCyan transition-colors"><i class="fa-solid fa-arrow-up"></i> Ir ao Topo</button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
+  <div id="playlistModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="document.getElementById('playlistModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-xl bg-skyCyan/10 border border-skyCyan/30 flex items-center justify-center text-skyCyan">
+          <i class="fa-solid fa-list-check text-lg"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg text-white">Carregar Lista M3U / M3U8</h3>
+          <p class="text-xs text-slate-400">Processamento em chunks para listas com +200 mil canais</p>
+        </div>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex border-b border-slate-800 mb-4">
+        <button id="tabUrlBtn" class="px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan">URL Remota</button>
+        <button id="tabFileBtn" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Arquivo Local</button>
+      </div>
+
+      <!-- Tab Content: URL Input -->
+      <div id="tabUrlContent" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">URL da Lista M3U</label>
+          <input id="playlistUrlInput" type="url" placeholder="http://servidor.com/get.php?username=...&password=...&type=m3u_plus"
+            class="w-full bg-slate-950 text-xs text-white p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan">
+        </div>
+        <button id="btnLoadUrl" class="w-full bg-gradient-to-r from-skyCyan to-skyBlue text-slate-950 font-bold text-xs py-3 rounded-xl shadow-glow-cyan">
+          Carregar por URL
+        </button>
+      </div>
+
+      <!-- Tab Content: File Upload -->
+      <div id="tabFileContent" class="space-y-4 hidden">
+        <div class="border-2 border-dashed border-slate-800 hover:border-skyCyan/50 rounded-2xl p-6 text-center transition-colors">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2"></i>
+          <p class="text-xs font-semibold text-slate-300">Arraste seu arquivo .M3U aqui</p>
+          <p class="text-[11px] text-slate-500 mt-1">ou clique para selecionar do computador</p>
+          <input id="fileInput" type="file" accept=".m3u,.m3u8,.txt" class="hidden">
+          <button onclick="document.getElementById('fileInput').click()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 px-4 py-2 rounded-xl border border-slate-700">
+            Selecionar Arquivo
+          </button>
+        </div>
+      </div>
+
+      <!-- Non-blocking Parse Progress Bar -->
+      <div id="parseProgressWrap" class="mt-4 hidden space-y-2">
+        <div class="flex justify-between text-[11px]">
+          <span id="parseProgressLabel" class="text-slate-400">Processando canais...</span>
+          <span id="parseProgressPercent" class="text-skyCyan font-bold">0%</span>
+        </div>
+        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+          <div id="parseProgressBar" class="h-full bg-gradient-to-r from-skyCyan to-skyAccent w-0 transition-all duration-200"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+  (() => {
+    'use strict';
+
+    // Application Global State
+    const state = {
+      rawChannels: [],       // Complete parsed dataset
+      filteredChannels: [],  // Currently visible filtered view
+      categories: [],        // Sorted unique category names
+      favorites: new Set(JSON.parse(localStorage.getItem('soares_favs') || '[]')),
+      history: JSON.parse(localStorage.getItem('soares_history') || '[]'),
+      currentIndex: -1,
+      hlsInstance: null,
+      mpegtsPlayer: null,
+      
+      // Aspect Ratios Configuration
+      aspectRatioIndex: 0,
+      aspectRatios: ['aspect-fit', 'aspect-fill', 'aspect-16-9', 'aspect-4-3'],
+      
+      // Retry Engine
+      retryCount: 0,
+      maxRetries: 3,
+      retryTimer: null,
+
+      // Virtual Scroll Configurations (Optimized for >200,000 Items)
+      itemHeight: 52,        // Row item height in pixels
+      bufferItems: 12,       // Render buffer zone items
+      
+    };
+
+    // DOM Caching
+    const $ = id => document.getElementById(id);
+    const dom = {
+      video: $('mainVideo'),
+      playerScreen: $('playerScreen'),
+      placeholder: $('playerPlaceholder'),
+      loader: $('playerLoader'),
+      loaderMessage: $('loaderMessage'),
+      currentTitle: $('currentChannelTitle'),
+      currentCategory: $('currentChannelCategory'),
+      currentLogo: $('currentLogo'),
+      statusAlert: $('playerStatusAlert'),
+      statusText: $('playerStatusText'),
+      
+      // Virtual Scroll Viewport
+      container: $('virtualScrollContainer'),
+      phantom: $('virtualScrollPhantom'),
+      content: $('virtualScrollContent'),
+      
+      // Controls & Inputs
+      searchInput: $('searchInput'),
+      categorySelect: $('categorySelect'),
+      btnFavToggle: $('btnToggleFavorites'),
+      favCurrentIcon: $('favCurrentIcon'),
+      recentContainer: $('recentChannelsList'),
+      muteIcon: $('muteIcon'),
+      
+      // Modals
+      playlistModal: $('playlistModal'),
+    };
+
+    /* ==========================================================================
+       1. ASYNCHRONOUS NON-BLOCKING M3U PARSER FOR >200,000 CHANNELS
+       ========================================================================== */
+    async function parseM3UChunked(text, onProgress) {
+      return new Promise((resolve) => {
+        const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+        const totalLines = lines.length;
+        const channels = [];
+        
+        let meta = null;
+        let lineIdx = 0;
+        const chunkSize = 12000; // Lines processed per async tick
+
+        function processChunk() {
+          const end = Math.min(lineIdx + chunkSize, totalLines);
+          
+          for (; lineIdx < end; lineIdx++) {
+            const line = lines[lineIdx].trim();
+            if (!line) continue;
+
+            if (line.startsWith('#EXTINF:')) {
+              const commaIdx = line.indexOf(',');
+              const attrs = commaIdx >= 0 ? line.slice(8, commaIdx) : line.slice(8);
+              const name = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : 'Canal Sem Nome';
+
+              const logoMatch = attrs.match(/tvg-logo="([^"]*)"/i);
+              const groupMatch = attrs.match(/group-title="([^"]*)"/i);
+
+              meta = {
+                id: channels.length,
+                name: name || 'Canal Desconhecido',
+                logo: logoMatch ? logoMatch[1] : '',
+                group: groupMatch ? groupMatch[1] : 'Outros / Gerais'
+              };
+            } else if (!line.startsWith('#') && meta) {
+              if (/^https?:\/\//i.test(line)) {
+                meta.url = line;
+                channels.push(meta);
+              }
+              meta = null;
+            }
+          }
+
+          if (onProgress) {
+            onProgress(Math.min(100, Math.round((lineIdx / totalLines) * 100)));
+          }
+
+          if (lineIdx < totalLines) {
+            // Yield execution to preserve browser responsiveness
+            if ('requestIdleCallback' in window) {
+              requestIdleCallback(processChunk);
+            } else {
+              setTimeout(processChunk, 0);
+            }
+          } else {
+            resolve(channels);
+          }
+        }
+
+        processChunk();
+      });
+    }
+
+    /* ==========================================================================
+       2. VIRTUAL SCROLLING ENGINE (SILKY 60FPS FOR MASSIVE DOMS)
+       ========================================================================== */
+    function updateVirtualScroll() {
+      const total = state.filteredChannels.length;
+      const containerHeight = dom.container.clientHeight || 500;
+      const scrollTop = dom.container.scrollTop;
+
+      // Update phantom element height
+      dom.phantom.style.height = `${total * state.itemHeight}px`;
+
+      // Calculate active visible row bounds
+      let startIndex = Math.floor(scrollTop / state.itemHeight) - state.bufferItems;
+      let endIndex = Math.ceil((scrollTop + containerHeight) / state.itemHeight) + state.bufferItems;
+
+      startIndex = Math.max(0, startIndex);
+      endIndex = Math.min(total, endIndex);
+
+      // Offset visible element container
+      dom.content.style.transform = `translateY(${startIndex * state.itemHeight}px)`;
+
+      // Build visible DOM row nodes
+      let html = '';
+      for (let i = startIndex; i < endIndex; i++) {
+        const item = state.filteredChannels[i];
+        const isActive = item.originalIndex === state.currentIndex;
+        const isFav = state.favorites.has(item.originalIndex);
+
+        html += `
+          <div data-index="${item.originalIndex}" onclick="window.SOARES_APP.playChannel(${item.originalIndex})"
+            class="group flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all border ${
+              isActive 
+                ? 'bg-skyCyan/10 border-skyCyan/50 shadow-glow-cyan' 
+                : 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/60'
+            }" style="height: ${state.itemHeight - 4}px">
+            
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 text-[10px] font-bold text-skyCyan">
+                ${
+                  item.logo 
+                    ? `<img src="${escapeHtml(item.logo)}" class="w-full h-full object-contain" onerror="this.outerHTML='${getInitial(item.name)}'">`
+                    : getInitial(item.name)
+                }
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold ${isActive ? 'text-skyCyan' : 'text-slate-200'} truncate group-hover:text-skyCyan transition-colors">
+                  ${escapeHtml(item.name)}
+                </p>
+                <p class="text-[10px] text-slate-500 truncate">${escapeHtml(item.group)}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button onclick="event.stopPropagation(); window.SOARES_APP.toggleFavorite(${item.originalIndex})" 
+                class="p-1.5 text-xs rounded-lg text-slate-600 hover:text-amber-400 ${isFav ? 'text-amber-400' : ''}">
+                <i class="fa-solid fa-star"></i>
+              </button>
+              <div class="w-6 h-6 rounded-lg ${isActive ? 'bg-skyCyan text-slate-950' : 'bg-slate-800 text-slate-400'} flex items-center justify-center text-[10px]">
+                <i class="fa-solid ${isActive ? 'fa-volume-high' : 'fa-play'}"></i>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }
+
+      dom.content.innerHTML = html || `
+        <div class="text-center py-12 text-slate-500 text-xs">
+          <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-700"></i>
+          <p>Nenhum canal corresponde aos critérios de busca.</p>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       3. FAST FILTERING & PRE-INDEXED SEARCH ENGINE
+       ========================================================================== */
+    function applyFilters() {
+      const query = dom.searchInput.value.trim().toLowerCase();
+      const selectedCat = dom.categorySelect.value;
+      const favsOnly = dom.btnFavToggle.classList.contains('active-fav');
+
+      state.filteredChannels = [];
+
+      for (let i = 0; i < state.rawChannels.length; i++) {
+        const item = state.rawChannels[i];
+
+        if (favsOnly && !state.favorites.has(i)) continue;
+        if (selectedCat && item.group !== selectedCat) continue;
+        if (query && !item.name.toLowerCase().includes(query) && !item.group.toLowerCase().includes(query)) continue;
+
+        state.filteredChannels.push({
+          ...item,
+          originalIndex: i
+        });
+      }
+
+      $('filteredCountLabel').textContent = `Exibindo ${state.filteredChannels.length.toLocaleString()} de ${state.rawChannels.length.toLocaleString()} canais`;
+      dom.container.scrollTop = 0;
+      updateVirtualScroll();
+    }
+
+    /* ==========================================================================
+       4. PRO MEDIA PLAYER ENGINE & AUTOMATIC RETRY SYSTEM
+       ========================================================================== */
+    function stopCurrentPlayers() {
+      if (state.hlsInstance) {
+        try { state.hlsInstance.destroy(); } catch (_) {}
+        state.hlsInstance = null;
+      }
+      if (state.mpegtsPlayer) {
+        try { state.mpegtsPlayer.pause(); state.mpegtsPlayer.unload(); state.mpegtsPlayer.detachMediaElement(); state.mpegtsPlayer.destroy(); } catch (_) {}
+        state.mpegtsPlayer = null;
+      }
+      if (state.retryTimer) {
+        clearTimeout(state.retryTimer);
+        state.retryTimer = null;
+      }
+    }
+
+    function hidePlayerLoader() {
+      dom.loader.classList.add('hidden');
+      dom.loader.classList.remove('flex');
+    }
+
+    function playChannel(index, isRetry = false) {
+      const channel = state.rawChannels[index];
+      if (!channel || !channel.url) return;
+
+      if (!isRetry) state.retryCount = 0;
+      state.currentIndex = index;
+      dom.placeholder.classList.add('hidden');
+      dom.loader.classList.remove('hidden');
+      dom.loader.classList.add('flex');
+      dom.loaderMessage.textContent = isRetry
+        ? `Reconectando (tentativa ${state.retryCount}/${state.maxRetries})...`
+        : `Carregando ${channel.name}...`;
+      dom.statusAlert.classList.add('hidden');
+
+      dom.currentTitle.textContent = channel.name;
+      dom.currentCategory.textContent = channel.group || 'Outros / Gerais';
+      dom.currentLogo.innerHTML = channel.logo
+        ? `<img src="${escapeHtml(channel.logo)}" class="w-full h-full object-contain" onerror="this.parentElement.textContent='${getInitial(channel.name)}'">`
+        : getInitial(channel.name);
+
+      updateFavButtonState();
+      addToHistory(index);
+      updateVirtualScroll();
+
+      stopCurrentPlayers();
+      const video = dom.video;
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+
+      const url = channel.url.trim();
+      const cleanUrl = url.split(/[?#]/)[0].toLowerCase();
+      const isHls = /\.m3u8$/i.test(cleanUrl) || /\.m3u8[?#]/i.test(url);
+      const isTs = /\.ts$/i.test(cleanUrl) || /\.mpegts$/i.test(cleanUrl);
+
+      const onPlaying = () => {
+        hidePlayerLoader();
+        dom.statusAlert.classList.add('hidden');
+      };
+      video.addEventListener('playing', onPlaying, { once: true });
+      video.addEventListener('error', () => {
+        if (state.currentIndex !== index) return;
+        const mediaError = video.error;
+        const message = mediaError
+          ? ({1:'reprodução interrompida',2:'falha de rede ou bloqueio de acesso (CORS)',3:'formato/codec não suportado ou arquivo danificado',4:'formato de mídia não suportado'})[mediaError.code] || `erro de mídia ${mediaError.code}`
+          : 'falha ao abrir a transmissão';
+        handlePlaybackError(index, message, { retryable: mediaError?.code === 2 });
+      }, { once: true });
+
+      if (isHls && window.Hls && Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          manifestLoadingTimeOut: 20000,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingMaxRetry: 1,
+          fragLoadingMaxRetry: 2,
+          startLevel: -1
+        });
+        state.hlsInstance = hls;
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(url));
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {
+            hidePlayerLoader();
+            showStatusAlert('O canal foi carregado. Aperte Play para iniciar.');
+          });
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (!data.fatal || state.currentIndex !== index) return;
+          const detail = data.details || data.type || 'erro HLS';
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            try { hls.recoverMediaError(); } catch (_) { handlePlaybackError(index, detail); }
+          } else {
+            handlePlaybackError(index, detail, { retryable: data.type === Hls.ErrorTypes.NETWORK_ERROR });
+          }
+        });
+        hls.attachMedia(video);
+        return;
+      }
+
+      // Safari/iOS can play HLS natively even when HLS.js is unavailable.
+      if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.play().catch(() => handlePlaybackError(index, 'não foi possível iniciar o HLS nativo'));
+        return;
+      }
+
+      // Raw MPEG-TS is not supported directly by most browsers. mpegts.js transmuxes it when possible.
+      if (isTs && window.mpegts && mpegts.isSupported()) {
+        const player = mpegts.createPlayer({ type: 'mpegts', isLive: true, url }, {
+          enableWorker: true,
+          enableStashBuffer: true,
+          stashInitialSize: 128 * 1024
+        });
+        state.mpegtsPlayer = player;
+        player.on(mpegts.Events.ERROR, (type, detail, info) => {
+          if (state.currentIndex === index) handlePlaybackError(index, `MPEG-TS: ${detail || type || 'erro'}`, { retryable: true });
+        });
+        player.attachMediaElement(video);
+        player.load();
+        player.play().catch(() => {
+          hidePlayerLoader();
+          showStatusAlert('A transmissão foi aberta, mas o navegador não iniciou o vídeo. Aperte Play.');
+        });
+        return;
+      }
+
+      // Native playback for MP4 and other formats the browser itself supports.
+      if (/\.(avi|mkv|wmv|flv)$/i.test(cleanUrl)) {
+        hidePlayerLoader();
+        showStatusAlert('Este formato (' + cleanUrl.split('.').pop().toUpperCase() + ') geralmente não é reproduzido diretamente no navegador. Teste um link HLS (.m3u8) ou MP4 compatível.');
+        return;
+      }
+
+      video.src = url;
+      video.play().catch(() => {
+        // The video error event provides the more useful browser error when available.
+        setTimeout(() => {
+          if (state.currentIndex === index && video.paused && video.readyState === 0) {
+            handlePlaybackError(index, isTs ? 'MPEG-TS sem suporte neste navegador' : 'não foi possível iniciar a reprodução', { retryable: false });
+          }
+        }, 700);
+      });
+    }
+
+    function handlePlaybackError(index, details, options = {}) {
+      if (state.currentIndex !== index) return;
+      hidePlayerLoader();
+      const retryable = options.retryable !== false;
+
+      if (retryable && state.retryCount < state.maxRetries) {
+        state.retryCount++;
+        showStatusAlert(`Falha ao reproduzir (${details}). Nova tentativa em 3s (${state.retryCount}/${state.maxRetries}).`);
+        state.retryTimer = setTimeout(() => playChannel(index, true), 3000);
+      } else {
+        showStatusAlert(`Não foi possível reproduzir: ${details}. Se o link abre fora do SOARES TV, o servidor pode bloquear reprodução incorporada (CORS). A página não consegue remover esse bloqueio; teste outra fonte autorizada ou um link compatível.`);
+      }
+    }
+
+    /* ==========================================================================
+       5. UTILITY & HELPER FUNCTIONS
+       ========================================================================== */
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function getInitial(name) {
+      return (name || 'TV').replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'TV';
+    }
+
+    function showStatusAlert(msg) {
+      dom.statusAlert.classList.remove('hidden');
+      dom.statusText.textContent = msg;
+    }
+
+    function toggleFavorite(index) {
+      if (state.favorites.has(index)) {
+        state.favorites.delete(index);
+      } else {
+        state.favorites.add(index);
+      }
+      localStorage.setItem('soares_favs', JSON.stringify([...state.favorites]));
+      updateFavButtonState();
+      updateVirtualScroll();
+    }
+
+    function updateFavButtonState() {
+      const isFav = state.favorites.has(state.currentIndex);
+      dom.favCurrentIcon.className = isFav ? 'fa-solid fa-star text-amber-400' : 'fa-regular fa-star';
+    }
+
+    function addToHistory(index) {
+      state.history = state.history.filter(i => i !== index);
+      state.history.unshift(index);
+      if (state.history.length > 10) state.history.pop();
+      localStorage.setItem('soares_history', JSON.stringify(state.history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (!state.history.length) {
+        dom.recentContainer.innerHTML = '<p class="text-slate-500 text-[11px] italic py-2">Nenhum canal assistido recentemente.</p>';
+        return;
+      }
+
+      dom.recentContainer.innerHTML = state.history.map(idx => {
+        const c = state.rawChannels[idx];
+        if (!c) return '';
+        return `
+          <button onclick="window.SOARES_APP.playChannel(${idx})" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 px-3 py-1.5 rounded-xl text-xs flex-shrink-0 transition-colors">
+            <i class="fa-solid fa-circle-play text-skyCyan"></i>
+            <span class="truncate max-w-[120px] font-medium">${escapeHtml(c.name)}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function loadChannelsIntoApp(channels, sourceName) {
+      state.rawChannels = channels;
+      $('headerChannelCount').textContent = channels.length.toLocaleString();
+
+      const catSet = new Set(channels.map(c => c.group));
+      state.categories = [...catSet].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+      dom.categorySelect.innerHTML = '<option value="">Todas as Categorias (' + state.categories.length + ')</option>' +
+        state.categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+      applyFilters();
+      $('parseStatusBadge').innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> ${sourceName}`;
+    }
+
+    /* ==========================================================================
+       6. EVENT BINDINGS & SHORTCUTS
+       ========================================================================== */
+    function initEvents() {
+      dom.container.addEventListener('scroll', updateVirtualScroll);
+
+      dom.searchInput.addEventListener('input', () => {
+        $('btnClearSearch').classList.toggle('hidden', !dom.searchInput.value);
+        applyFilters();
+      });
+
+      $('btnClearSearch').addEventListener('click', () => {
+        dom.searchInput.value = '';
+        $('btnClearSearch').classList.add('hidden');
+        applyFilters();
+      });
+
+      dom.categorySelect.addEventListener('change', applyFilters);
+
+      dom.btnFavToggle.addEventListener('click', () => {
+        dom.btnFavToggle.classList.toggle('active-fav');
+        dom.btnFavToggle.classList.toggle('text-amber-400');
+        dom.btnFavToggle.classList.toggle('border-amber-400/40');
+        applyFilters();
+      });
+
+      $('btnFavCurrent').addEventListener('click', () => {
+        if (state.currentIndex >= 0) toggleFavorite(state.currentIndex);
+      });
+
+      $('btnMute').addEventListener('click', () => {
+        dom.video.muted = !dom.video.muted;
+        dom.muteIcon.className = dom.video.muted ? 'fa-solid fa-volume-xmark text-rose-400' : 'fa-solid fa-volume-high text-slate-300';
+      });
+
+      $('btnAspectRatio').addEventListener('click', () => {
+        state.aspectRatioIndex = (state.aspectRatioIndex + 1) % state.aspectRatios.length;
+        dom.playerScreen.className = `relative w-full aspect-video bg-black rounded-xl overflow-hidden group ${state.aspectRatios[state.aspectRatioIndex]}`;
+      });
+
+      $('btnPip').addEventListener('click', () => {
+        if (document.pictureInPictureElement) {
+          document.exitPictureInPicture();
+        } else if (dom.video.requestPictureInPicture) {
+          dom.video.requestPictureInPicture();
+        }
+      });
+
+      $('btnFullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          dom.playerScreen.requestFullscreen().catch(err => alert(err.message));
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      $('btnClearHistory').addEventListener('click', () => {
+        state.history = [];
+        localStorage.removeItem('soares_history');
+        renderHistory();
+      });
+
+      $('btnScrollToTop').addEventListener('click', () => {
+        dom.container.scrollTop = 0;
+      });
+
+      // Modal Open / Close Handlers
+      $('btnOpenPlaylistModal').addEventListener('click', () => dom.playlistModal.classList.remove('hidden'));
+
+      // Tab Controls inside Playlist Modal
+      $('tabUrlBtn').addEventListener('click', () => {
+        $('tabUrlBtn').className = 'px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan';
+        $('tabFileBtn').className = 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white';
+        $('tabUrlContent').classList.remove('hidden');
+        $('tabFileContent').classList.add('hidden');
+      });
+
+      $('tabFileBtn').addEventListener('click', () => {
+        $('tabFileBtn').className = 'px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan';
+        $('tabUrlBtn').className = 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white';
+        $('tabFileContent').classList.remove('hidden');
+        $('tabUrlContent').classList.add('hidden');
+      });
+
+      // Load List from Remote URL
+      $('btnLoadUrl').addEventListener('click', async () => {
+        const url = $('playlistUrlInput').value.trim();
+        if (!url) return alert('Cole primeiro a URL da lista M3U.');
+
+        $('parseProgressWrap').classList.remove('hidden');
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const text = await res.text();
+
+          const channels = await parseM3UChunked(text, (percent) => {
+            $('parseProgressBar').style.width = percent + '%';
+            $('parseProgressPercent').textContent = percent + '%';
+          });
+
+          loadChannelsIntoApp(channels, 'Lista Remota');
+          dom.playlistModal.classList.add('hidden');
+        } catch (err) {
+          alert('Erro ao carregar lista M3U. Pode ser bloqueio de CORS do servidor: ' + err.message);
+        } finally {
+          $('parseProgressWrap').classList.add('hidden');
+        }
+      });
+
+      // Load List from Local File
+      $('fileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        $('parseProgressWrap').classList.remove('hidden');
+        try {
+          const text = await file.text();
+          const channels = await parseM3UChunked(text, (percent) => {
+            $('parseProgressBar').style.width = percent + '%';
+            $('parseProgressPercent').textContent = percent + '%';
+          });
+
+          loadChannelsIntoApp(channels, file.name);
+          dom.playlistModal.classList.add('hidden');
+        } catch (err) {
+          alert('Erro ao ler o arquivo: ' + err.message);
+        } finally {
+          $('parseProgressWrap').classList.add('hidden');
+        }
+      });
+
+      // Comprehensive Keyboard Shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+        switch (e.key.toLowerCase()) {
+          case 'f':
+            $('btnFullscreen').click();
+            break;
+          case 'm':
+            $('btnMute').click();
+            break;
+          case 'p':
+            $('btnPip').click();
+            break;
+          case ' ':
+            e.preventDefault();
+            dom.video.paused ? dom.video.play() : dom.video.pause();
+            break;
+          case 'arrowup':
+            e.preventDefault();
+            dom.video.volume = Math.min(1, dom.video.volume + 0.1);
+            break;
+          case 'arrowdown':
+            e.preventDefault();
+            dom.video.volume = Math.max(0, dom.video.volume - 0.1);
+            break;
+          case 'arrowright':
+            e.preventDefault();
+            if (state.currentIndex < state.rawChannels.length - 1) playChannel(state.currentIndex + 1);
+            break;
+          case 'arrowleft':
+            e.preventDefault();
+            if (state.currentIndex > 0) playChannel(state.currentIndex - 1);
+            break;
+        }
+      });
+    }
+
+    // Public Application Global Object
+    window.SOARES_APP = {
+      playChannel,
+      toggleFavorite
+    };
+
+    // App Initialization Bootstrapper
+    window.onload = () => {
+      initEvents();
+      renderHistory();
+      
+      // Lista de canais embutida: aparece automaticamente ao abrir o SOARES TV.
+      const canaisSoares = [{"id":0,"name":"TNT Novelas Brazil","group":"Novelas e séries","url":"http://45.162.64.114/TNT_NOVELAS/index.m3u8","logo":""},{"id":1,"name":"TV Series","group":"Novelas e séries","url":"https://stmv1.srvif.com/tvserie/tvserie/playlist.m3u8","logo":""},{"id":2,"name":"Cartoon Network Latin America Brazil","group":"Infantil","url":"http://45.162.64.114/CARTOON_NETWORK/index.m3u8","logo":""},{"id":3,"name":"NickOnline HD","group":"Infantil","url":"https://x1colegal.com/hls/stream.m3u8","logo":""},{"id":4,"name":"Retro Cartoon","group":"Infantil","url":"https://stmv1.video.brstream.com.br/retrotv/retrotv/chunklist_w1069200121.m3u8","logo":""},{"id":5,"name":"Comedy Central Brasil","group":"Filmes e entretenimento","url":"https://stmv2.srvif.com/gafeab/gafeab/playlist.m3u8","logo":""},{"id":6,"name":"Fora Tedio TV","group":"Filmes e entretenimento","url":"https://stmv2.srvif.com/foratedio/foratedio/playlist.m3u8","logo":""},{"id":7,"name":"TV Life America","group":"Entretenimento","url":"https://streaming.cloudecast.com/hls/tvlifeamerica/index.m3u8","logo":""},{"id":8,"name":"Arte 1","group":"Cultura","url":"http://45.162.64.114/ARTE1/index.m3u8","logo":""},{"id":9,"name":"Bem Mais TV","group":"Entretenimento","url":"https://video09.logicahost.com.br/bemmaistv01/bemmaistv01/playlist.m3u8","logo":""},{"id":10,"name":"Unisul TV","group":"Cultura","url":"https://sitetv.brasilstream.com.br/hls/sitetv/index.m3u8?token=","logo":""},{"id":11,"name":"TV UFOP","group":"Cultura","url":"https://app.tvufop.com.br/hls/tvufop.m3u8","logo":""},{"id":12,"name":"STZ TV","group":"Entretenimento","url":"https://cdn.live.br1.jmvstream.com/webtv/AVJ-12952/playlist/playlist.m3u8","logo":""},{"id":13,"name":"Canal Futura","group":"Cultura","url":"http://45.162.64.114/FUTURA/index.m3u8","logo":""},{"id":14,"name":"ISTV (Brazil) (720p) [Not 24/7]","group":"Cultura","url":"https://stmv1.srvstm.com/sistema7933/sistema7933/playlist.m3u8","logo":""},{"id":15,"name":"Rede Minas","group":"Cultura","url":"https://8hzcavccys.zoeweb.tv/redeminas/ngrp:redeminas_all/playlist.m3u8","logo":""},{"id":16,"name":"Canal FDR","group":"Cultura","url":"https://v-us-01.wisestream.io/memfs/e4ade538-7924-4359-81ef-b9d4dd229e91.m3u8","logo":""},{"id":17,"name":"AgroCanal","group":"Agro","url":"http://45.162.64.114/AGRO_CANAL/index.m3u8","logo":""},{"id":18,"name":"A&E Latin America Brazil","group":"Filmes e séries","url":"http://170.83.16.50/AeE/index.m3u8","logo":""},{"id":19,"name":"Blitstv","group":"Entretenimento","url":"https://stmv1.transmissaodigital.com/blitstv/blitstv/playlist.m3u8","logo":""},{"id":20,"name":"Chroma TV","group":"Entretenimento","url":"https://5c483b9d1019c.streamlock.net/8054/8054/playlist.m3u8","logo":""},{"id":21,"name":"Conecta Mais TV","group":"Cultura","url":"https://adylnet.streampool.net/10324/live/hls/Conecta/index.m3u8","logo":""},{"id":22,"name":"Discovery Channel Latin America Brazil","group":"Documentários","url":"http://45.162.64.114/DISCOVERY_CHANNEL/index.m3u8","logo":""},{"id":23,"name":"Lifetime Latin America Brazil","group":"Filmes e séries","url":"http://170.83.16.50/LIFETIME/index.m3u8","logo":""},{"id":24,"name":"Loading","group":"Entretenimento","url":"https://stmv1.srvif.com/loadingtv/loadingtv/playlist.m3u8","logo":""},{"id":25,"name":"Petlovers TV","group":"Pets","url":"https://video04.logicahost.com.br/petloverstv/petloverstv/playlist.m3u8","logo":""},{"id":26,"name":"Rede NGT","group":"Cultura","url":"https://isaocorp.cloudecast.com/ngt/index.m3u8","logo":""},{"id":27,"name":"TV+Pet","group":"Pets","url":"https://stmv5.samcast.com.br/tvmaispet6354/tvmaispet6354/playlist.m3u8","logo":""},{"id":28,"name":"TV Paraense","group":"Canais regionais","url":"https://video09.logicahost.com.br/tvparaense/tvparaense/playlist.m3u","logo":""},{"id":29,"name":"TV Natal","group":"Canais regionais","url":"http://185.228.163.146:8000/play/a01y/index.m3u8","logo":""},{"id":30,"name":"Rede Brasil","group":"Canais regionais","url":"https://redebrasil.nuvemplay.live/hls/stream.m3u8","logo":""},{"id":31,"name":"Rede SPTV","group":"Canais regionais","url":"https://video01.logicahost.com.br/websptv/websptv/playlist.m3u8","logo":""},{"id":32,"name":"Rede TV! SD","group":"Canais abertos","url":"http://45.162.64.114/REDE_TV/index.m3u8","logo":""},{"id":33,"name":"SBT Cuiaba","group":"Canais regionais","url":"https://video09.logicahost.com.br/sbtcuiaba/sbtcuiaba/playlist.m3u8","logo":""},{"id":34,"name":"TV Aldeia","group":"Canais regionais","url":"https://stmv1.samcast.com.br/giovane7843/giovane7843/playlist.m3u8","logo":""},{"id":35,"name":"TV Alternativa","group":"Canais regionais","url":"https://stmv5.samcast.com.br/wagner7919/wagner7919/playlist.m3u8","logo":""},{"id":36,"name":"Box Kids TV","group":"Infantil","url":"http://170.83.49.66:8083/BOXKIDSHD/index.m3u8","logo":""},{"id":37,"name":"DumDum","group":"Infantil","url":"http://45.162.64.114/ZOOMOO_KIDS/index.m3u8","logo":""},{"id":38,"name":"AMC Latin America Brazil","group":"Filmes e séries","url":"http://170.83.49.66:8083/AMCHD/index.m3u8","logo":""},{"id":39,"name":"AXN (Brazil)","group":"Filmes e séries","url":"http://170.83.16.50/AXN/index.m3u8","logo":""},{"id":40,"name":"Classique TV","group":"Filmes e séries","url":"https://stmv1.srvif.com/classique/classique/playlist.m3u8","logo":""},{"id":41,"name":"MyTime Movie Network (Brazil)","group":"Filmes e séries","url":"https://appletree-mytime-samsungbrazil.amagi.tv/playlist.m3u8","logo":""},{"id":42,"name":"Sony Movies","group":"Filmes e séries","url":"http://45.162.64.114/SONY_MOVIES/index.m3u8","logo":""},{"id":43,"name":"TikTok Radio Brasil","group":"Música","url":"https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99992529","logo":""},{"id":44,"name":"Lamore Rock Show WebTV","group":"Música","url":"https://a.cdni.live/rodrigo2364/rodrigo2364/playlist.m3u8","logo":""},{"id":45,"name":"Trace Brazuca HD","group":"Música","url":"https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01131-tracetv-tracebrazuca-samsungbr/playlist.m3u8","logo":""},{"id":46,"name":"Aratu On","group":"Canais regionais","url":"https://cdn.live.br1.jmvstream.com/w/LVW-9359/LVW9359_XSyReL0QVf/playlist.m3u8","logo":""},{"id":47,"name":"Canal Metropolitano de Noticias","group":"Notícias","url":"https://stmv5.samcast.com.br/claudio8701/claudio8701/playlist.m3u8","logo":""},{"id":48,"name":"Jovem Pan News","group":"Notícias","url":"http://170.83.49.66:8083/JOVEMPANNEWSHD/index.m3u8","logo":""},{"id":49,"name":"Record News","group":"Notícias","url":"http://45.162.64.114/RECORD_NEWS/index.m3u8","logo":""},{"id":50,"name":"SBT News","group":"Notícias","url":"https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8","logo":""},{"id":51,"name":"Nickelodeon (Brazil)","group":"Infantil","url":"https://stmv2.srvif.com/nicktoons/nicktoons/playlist.m3u8","logo":""},{"id":52,"name":"CazeTV","group":"Esportes","url":"http://138.204.86.4:8080/CAZE_TV/playlist.m3u8","logo":""},{"id":53,"name":"TV Parana Turismo (720p) [Not 24/7]","group":"Cultura","url":"http://200.189.113.201/hls/tve.m3u8","logo":""},{"id":54,"name":"Canal do Boi","group":"Agro","url":"http://45.162.64.114/CANAL_DO_BOI/index.m3u8","logo":""},{"id":55,"name":"Play TV (Brazil)","group":"Entretenimento","url":"http://45.162.64.114/PLAY_TV/index.m3u8","logo":""},{"id":56,"name":"Rede CNT Rio de Janeiro","group":"Canais regionais","url":"http://45.162.64.114/CNT/index.m3u8","logo":""},{"id":57,"name":"Sony Channel (Brazil)","group":"Filmes e séries","url":"http://170.83.16.50/SONY_CHANNEL/index.m3u8","logo":""},{"id":58,"name":"TV A Critica","group":"Canais regionais","url":"https://cdn.live.br1.jmvstream.com/w/LVW-20715/LVW20715_50E3x2MCm2/playlist.m3u8","logo":""},{"id":59,"name":"TV Brasil","group":"Canais abertos","url":"http://45.162.64.114/TV_BRASIL/index.m3u8","logo":""},{"id":60,"name":"TV Fronteira (480i)","group":"Canais regionais","url":"https://tvfronteira.brasilstream.com.br/hls/tvfronteira/index.m3u8","logo":""},{"id":61,"name":"TV Cultura","group":"Cultura","url":"http://45.162.64.114/TV_CULTURA/index.m3u8","logo":""},{"id":62,"name":"WooHoo","group":"Esportes","url":"http://45.162.64.114/WOOHOO/index.m3u8","logo":""}];
+      loadChannelsIntoApp(canaisSoares, 'Canais integrados');
+    };
+
+  })();
+  </script>
+</body>
+</html>
