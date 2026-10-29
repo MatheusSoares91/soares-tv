@@ -126,7 +126,6 @@
 
     <!-- Quick Action Controls -->
     <div class="flex items-center gap-2 sm:gap-3">
-      <!-- Playlist Management Button -->
       <button id="btnOpenPlaylistModal" style="display:none" aria-hidden="true" tabindex="-1">
         <i class="fa-solid fa-folder-open text-skyCyan"></i>
         <span class="hidden sm:inline">Listas / M3U</span>
@@ -196,27 +195,18 @@
 
           <!-- Player Control Action Icons -->
           <div class="flex items-center gap-1.5 sm:gap-2">
-            <!-- Toggle Favorite Button -->
             <button id="btnFavCurrent" title="Favoritar Canal" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-regular fa-star text-sm" id="favCurrentIcon"></i>
             </button>
-
-            <!-- Toggle Mute Button -->
             <button id="btnMute" title="Mutar / Desmutar (M)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-volume-high text-sm" id="muteIcon"></i>
             </button>
-
-            <!-- Aspect Ratio Switcher -->
             <button id="btnAspectRatio" title="Proporção da Tela" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-expand text-sm"></i>
             </button>
-
-            <!-- Picture in Picture Mode -->
             <button id="btnPip" title="Picture in Picture (P)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-images text-sm"></i>
             </button>
-
-            <!-- Fullscreen Mode -->
             <button id="btnFullscreen" title="Tela Cheia (F)" class="w-9 h-9 rounded-lg bg-skyCyan/10 hover:bg-skyCyan/20 text-skyCyan flex items-center justify-center transition-colors border border-skyCyan/30">
               <i class="fa-solid fa-maximize text-sm"></i>
             </button>
@@ -315,100 +305,36 @@
 
   </main>
 
-  <!-- MODAL 1: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
-  <div id="playlistModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
-      <button onclick="document.getElementById('playlistModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
-
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-10 h-10 rounded-xl bg-skyCyan/10 border border-skyCyan/30 flex items-center justify-center text-skyCyan">
-          <i class="fa-solid fa-list-check text-lg"></i>
-        </div>
-        <div>
-          <h3 class="font-bold text-lg text-white">Carregar Lista M3U / M3U8</h3>
-          <p class="text-xs text-slate-400">Processamento em chunks para listas com +200 mil canais</p>
-        </div>
-      </div>
-
-      <!-- Modal Tabs -->
-      <div class="flex border-b border-slate-800 mb-4">
-        <button id="tabUrlBtn" class="px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan">URL Remota</button>
-        <button id="tabFileBtn" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Arquivo Local</button>
-      </div>
-
-      <!-- Tab Content: URL Input -->
-      <div id="tabUrlContent" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">URL da Lista M3U</label>
-          <input id="playlistUrlInput" type="url" placeholder="http://servidor.com/get.php?username=...&password=...&type=m3u_plus"
-            class="w-full bg-slate-950 text-xs text-white p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan">
-        </div>
-        <button id="btnLoadUrl" class="w-full bg-gradient-to-r from-skyCyan to-skyBlue text-slate-950 font-bold text-xs py-3 rounded-xl shadow-glow-cyan">
-          Carregar por URL
-        </button>
-      </div>
-
-      <!-- Tab Content: File Upload -->
-      <div id="tabFileContent" class="space-y-4 hidden">
-        <div class="border-2 border-dashed border-slate-800 hover:border-skyCyan/50 rounded-2xl p-6 text-center transition-colors">
-          <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2"></i>
-          <p class="text-xs font-semibold text-slate-300">Arraste seu arquivo .M3U aqui</p>
-          <p class="text-[11px] text-slate-500 mt-1">ou clique para selecionar do computador</p>
-          <input id="fileInput" type="file" accept=".m3u,.m3u8,.txt" class="hidden">
-          <button onclick="document.getElementById('fileInput').click()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 px-4 py-2 rounded-xl border border-slate-700">
-            Selecionar Arquivo
-          </button>
-        </div>
-      </div>
-
-      <!-- Non-blocking Parse Progress Bar -->
-      <div id="parseProgressWrap" class="mt-4 hidden space-y-2">
-        <div class="flex justify-between text-[11px]">
-          <span id="parseProgressLabel" class="text-slate-400">Processando canais...</span>
-          <span id="parseProgressPercent" class="text-skyCyan font-bold">0%</span>
-        </div>
-        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
-          <div id="parseProgressBar" class="h-full bg-gradient-to-r from-skyCyan to-skyAccent w-0 transition-all duration-200"></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- JAVASCRIPT APP LOGIC -->
   <script>
   (() => {
     'use strict';
 
-    // Application Global State
+    // Application Global State & Embedded Channels Dataset
     const state = {
-      rawChannels: [],       // Complete parsed dataset
-      filteredChannels: [],  // Currently visible filtered view
-      categories: [],        // Sorted unique category names
+      rawChannels: [
+        // EXEMPLO DE CANAIS EMBUTIDOS (Adicione ou substitua aqui com a sua lista real)
+        { id: 0, name: "Exemplo HD", group: "Gerais", logo: "", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+      ],
+      filteredChannels: [],
+      categories: [],
       favorites: new Set(JSON.parse(localStorage.getItem('soares_favs') || '[]')),
       history: JSON.parse(localStorage.getItem('soares_history') || '[]'),
       currentIndex: -1,
       hlsInstance: null,
       mpegtsPlayer: null,
       
-      // Aspect Ratios Configuration
       aspectRatioIndex: 0,
       aspectRatios: ['aspect-fit', 'aspect-fill', 'aspect-16-9', 'aspect-4-3'],
       
-      // Retry Engine
       retryCount: 0,
       maxRetries: 3,
       retryTimer: null,
 
-      // Virtual Scroll Configurations (Optimized for >200,000 Items)
-      itemHeight: 52,        // Row item height in pixels
-      bufferItems: 12,       // Render buffer zone items
-      
+      itemHeight: 52,
+      bufferItems: 12,
     };
 
-    // DOM Caching
     const $ = id => document.getElementById(id);
     const dom = {
       video: $('mainVideo'),
@@ -421,109 +347,50 @@
       currentLogo: $('currentLogo'),
       statusAlert: $('playerStatusAlert'),
       statusText: $('playerStatusText'),
-      
-      // Virtual Scroll Viewport
       container: $('virtualScrollContainer'),
       phantom: $('virtualScrollPhantom'),
       content: $('virtualScrollContent'),
-      
-      // Controls & Inputs
       searchInput: $('searchInput'),
       categorySelect: $('categorySelect'),
       btnFavToggle: $('btnToggleFavorites'),
       favCurrentIcon: $('favCurrentIcon'),
       recentContainer: $('recentChannelsList'),
       muteIcon: $('muteIcon'),
-      
-      // Modals
-      playlistModal: $('playlistModal'),
     };
 
-    /* ==========================================================================
-       1. ASYNCHRONOUS NON-BLOCKING M3U PARSER FOR >200,000 CHANNELS
-       ========================================================================== */
-    async function parseM3UChunked(text, onProgress) {
-      return new Promise((resolve) => {
-        const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
-        const totalLines = lines.length;
-        const channels = [];
-        
-        let meta = null;
-        let lineIdx = 0;
-        const chunkSize = 12000; // Lines processed per async tick
-
-        function processChunk() {
-          const end = Math.min(lineIdx + chunkSize, totalLines);
-          
-          for (; lineIdx < end; lineIdx++) {
-            const line = lines[lineIdx].trim();
-            if (!line) continue;
-
-            if (line.startsWith('#EXTINF:')) {
-              const commaIdx = line.indexOf(',');
-              const attrs = commaIdx >= 0 ? line.slice(8, commaIdx) : line.slice(8);
-              const name = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : 'Canal Sem Nome';
-
-              const logoMatch = attrs.match(/tvg-logo="([^"]*)"/i);
-              const groupMatch = attrs.match(/group-title="([^"]*)"/i);
-
-              meta = {
-                id: channels.length,
-                name: name || 'Canal Desconhecido',
-                logo: logoMatch ? logoMatch[1] : '',
-                group: groupMatch ? groupMatch[1] : 'Outros / Gerais'
-              };
-            } else if (!line.startsWith('#') && meta) {
-              if (/^https?:\/\//i.test(line)) {
-                meta.url = line;
-                channels.push(meta);
-              }
-              meta = null;
-            }
-          }
-
-          if (onProgress) {
-            onProgress(Math.min(100, Math.round((lineIdx / totalLines) * 100)));
-          }
-
-          if (lineIdx < totalLines) {
-            // Yield execution to preserve browser responsiveness
-            if ('requestIdleCallback' in window) {
-              requestIdleCallback(processChunk);
-            } else {
-              setTimeout(processChunk, 0);
-            }
-          } else {
-            resolve(channels);
-          }
-        }
-
-        processChunk();
-      });
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
 
-    /* ==========================================================================
-       2. VIRTUAL SCROLLING ENGINE (SILKY 60FPS FOR MASSIVE DOMS)
-       ========================================================================== */
+    function getInitial(name) {
+      return (name || 'TV').substring(0, 2).toUpperCase();
+    }
+
+    function initCategories() {
+      const cats = [...new Set(state.rawChannels.map(c => c.group))].sort();
+      let html = '<option value="">Todas as Categorias (' + state.rawChannels.length + ')</option>';
+      cats.forEach(cat => {
+        html += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`;
+      });
+      dom.categorySelect.innerHTML = html;
+      $('headerChannelCount').textContent = state.rawChannels.length.toLocaleString();
+    }
+
     function updateVirtualScroll() {
       const total = state.filteredChannels.length;
       const containerHeight = dom.container.clientHeight || 500;
       const scrollTop = dom.container.scrollTop;
 
-      // Update phantom element height
       dom.phantom.style.height = `${total * state.itemHeight}px`;
 
-      // Calculate active visible row bounds
       let startIndex = Math.floor(scrollTop / state.itemHeight) - state.bufferItems;
       let endIndex = Math.ceil((scrollTop + containerHeight) / state.itemHeight) + state.bufferItems;
 
       startIndex = Math.max(0, startIndex);
       endIndex = Math.min(total, endIndex);
 
-      // Offset visible element container
       dom.content.style.transform = `translateY(${startIndex * state.itemHeight}px)`;
 
-      // Build visible DOM row nodes
       let html = '';
       for (let i = startIndex; i < endIndex; i++) {
         const item = state.filteredChannels[i];
@@ -576,9 +443,6 @@
       `;
     }
 
-    /* ==========================================================================
-       3. FAST FILTERING & PRE-INDEXED SEARCH ENGINE
-       ========================================================================== */
     function applyFilters() {
       const query = dom.searchInput.value.trim().toLowerCase();
       const selectedCat = dom.categorySelect.value;
@@ -604,9 +468,6 @@
       updateVirtualScroll();
     }
 
-    /* ==========================================================================
-       4. PRO MEDIA PLAYER ENGINE & AUTOMATIC RETRY SYSTEM (COM PROXY DA RENDER)
-       ========================================================================== */
     function stopCurrentPlayers() {
       if (state.hlsInstance) {
         try { state.hlsInstance.destroy(); } catch (_) {}
@@ -616,10 +477,6 @@
         try { state.mpegtsPlayer.pause(); state.mpegtsPlayer.unload(); state.mpegtsPlayer.detachMediaElement(); state.mpegtsPlayer.destroy(); } catch (_) {}
         state.mpegtsPlayer = null;
       }
-      if (state.retryTimer) {
-        clearTimeout(state.retryTimer);
-        state.retryTimer = null;
-      }
     }
 
     function hidePlayerLoader() {
@@ -627,31 +484,34 @@
       dom.loader.classList.remove('flex');
     }
 
+    function showStatusAlert(msg) {
+      dom.statusText.textContent = msg;
+      dom.statusAlert.classList.remove('hidden');
+    }
+
+    /* ==========================================================================
+       PLAYER ENGINE COM PROXY DA RENDER INTEGRADO
+       ========================================================================== */
     function playChannel(index, isRetry = false) {
       const channel = state.rawChannels[index];
       if (!channel || !channel.url) return;
 
-      if (!isRetry) state.retryCount = 0;
       state.currentIndex = index;
       dom.placeholder.classList.add('hidden');
       dom.loader.classList.remove('hidden');
       dom.loader.classList.add('flex');
-      dom.loaderMessage.textContent = isRetry
-        ? `Reconectando (tentativa ${state.retryCount}/${state.maxRetries})...`
-        : `Carregando ${channel.name}...`;
+      dom.loaderMessage.textContent = `Carregando ${channel.name}...`;
       dom.statusAlert.classList.add('hidden');
 
       dom.currentTitle.textContent = channel.name;
-      dom.currentCategory.textContent = channel.group || 'Outros / Gerais';
+      dom.currentCategory.textContent = channel.group || 'Gerais';
       dom.currentLogo.innerHTML = channel.logo
         ? `<img src="${escapeHtml(channel.logo)}" class="w-full h-full object-contain" onerror="this.parentElement.textContent='${getInitial(channel.name)}'">`
         : getInitial(channel.name);
 
-      updateFavButtonState();
-      addToHistory(index);
       updateVirtualScroll();
-
       stopCurrentPlayers();
+
       const video = dom.video;
       video.pause();
       video.removeAttribute('src');
@@ -660,27 +520,23 @@
       const rawUrl = channel.url.trim();
 
       // ==========================================
-      // AQUI ENTRA O SEU PROXY DA RENDER (Bypass CORS/Mixed Content)
+      // ROTEAMENTO ATRAVÉS DO PROXY DA RENDER
       // ==========================================
       const proxyServerUrl = 'https://soarestv-proxy.onrender.com/stream?url=';
       const url = proxyServerUrl + encodeURIComponent(rawUrl);
 
       const cleanUrl = rawUrl.split(/[?#]/)[0].toLowerCase();
       const isHls = /\.m3u8$/i.test(cleanUrl) || /\.m3u8[?#]/i.test(rawUrl);
-      const isTs = /\.ts$/i.test(cleanUrl) || /\.mpegts$/i.test(cleanUrl);
 
-      const onPlaying = () => {
+      video.addEventListener('playing', () => {
         hidePlayerLoader();
         dom.statusAlert.classList.add('hidden');
-      };
-      video.addEventListener('playing', onPlaying, { once: true });
+      }, { once: true });
+
       video.addEventListener('error', () => {
         if (state.currentIndex !== index) return;
-        const mediaError = video.error;
-        const message = mediaError
-          ? ({1:'reprodução interrompida',2:'falha de rede ou bloqueio de acesso (CORS)',3:'formato/codec não suportado ou arquivo danificado',4:'formato de mídia não suportado'})[mediaError.code] || `erro de mídia ${mediaError.code}`
-          : 'falha ao abrir a transmissão';
-        handlePlaybackError(index, message, { retryable: mediaError?.code === 2 });
+        hidePlayerLoader();
+        showStatusAlert('Erro ao reproduzir canal via proxy.');
       }, { once: true });
 
       if (isHls && window.Hls && Hls.isSupported()) {
@@ -689,76 +545,44 @@
           lowLatencyMode: false,
           manifestLoadingTimeOut: 20000,
           fragLoadingTimeOut: 20000,
-          manifestLoadingMaxRetry: 1,
-          fragLoadingMaxRetry: 2,
-          startLevel: -1
         });
         state.hlsInstance = hls;
-        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(url));
+        hls.loadSource(url);
+        hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {
             hidePlayerLoader();
-            showStatusAlert('O canal foi carregado. Aperte Play para iniciar.');
+            showStatusAlert('Clique no play para iniciar.');
           });
         });
         hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (!data.fatal || state.currentIndex !== index) return;
-          const detail = data.details || data.type || 'erro HLS';
-          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            hls.recoverMediaError();
-          } else {
-            handlePlaybackError(index, `erro HLS fatal (${detail})`, { retryable: true });
+          if (data.fatal) {
+            hidePlayerLoader();
+            showStatusAlert('Erro HLS / Conexão com o stream.');
           }
-        });
-        hls.attachMedia(video);
-      } else if (isTs && window.mpegts && mpegts.getFeatureList().mseLivePlayback) {
-        const player = mpegts.createPlayer({
-          type: 'mpegts',
-          isLive: true,
-          url: url
-        }, {
-          enableStashBuffer: false,
-          stashInitialSize: 128,
-          liveSyncDuration: 1.5,
-          liveMaxLatencyDuration: 3
-        });
-        state.mpegtsPlayer = player;
-        player.attachMediaElement(video);
-        player.load();
-        player.play().catch(() => {
-          hidePlayerLoader();
-          showStatusAlert('O canal MPEG-TS foi carregado. Aperte Play.');
-        });
-        player.on(mpegts.Events.ERROR, (errorType, errorDetail) => {
-          if (state.currentIndex !== index) return;
-          handlePlaybackError(index, `erro MPEG-TS (${errorType})`, { retryable: true });
         });
       } else {
         video.src = url;
         video.play().catch(() => {
           hidePlayerLoader();
-          showStatusAlert('O navegador não iniciou o vídeo automaticamente. Aperte Play.');
+          showStatusAlert('Erro ao iniciar stream nativo.');
         });
       }
     }
 
-    // Funções auxiliares mantidas intactas
-    function escapeHtml(str) {
-      return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-    function getInitial(name) {
-      return (name || 'TV').substring(0, 2).toUpperCase();
-    }
-    function updateFavButtonState() {}
-    function addToHistory() {}
-    function handlePlaybackError(index, msg) {
-      hidePlayerLoader();
-      showStatusAlert(`Erro: ${msg}`);
-    }
-    function showStatusAlert(msg) {
-      dom.statusText.textContent = msg;
-      dom.statusAlert.classList.remove('hidden');
-    }
+    // Event Bindings
+    dom.container.addEventListener('scroll', updateVirtualScroll);
+    dom.searchInput.addEventListener('input', applyFilters);
+    dom.categorySelect.addEventListener('change', applyFilters);
+
+    $('btnToggleFavorites').addEventListener('click', () => {
+      dom.btnFavToggle.classList.toggle('active-fav');
+      applyFilters();
+    });
+
+    // Inicialização
+    initCategories();
+    applyFilters();
 
     window.SOARES_APP = {
       playChannel,
