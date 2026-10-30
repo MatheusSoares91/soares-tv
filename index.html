@@ -126,7 +126,7 @@
 
     <!-- Quick Action Controls -->
     <div class="flex items-center gap-2 sm:gap-3">
-      <!-- Playlist Management Button (Oculto) -->
+      <!-- Playlist Management Button -->
       <button id="btnOpenPlaylistModal" style="display:none" aria-hidden="true" tabindex="-1">
         <i class="fa-solid fa-folder-open text-skyCyan"></i>
         <span class="hidden sm:inline">Listas / M3U</span>
@@ -147,7 +147,7 @@
         <div id="playerScreen" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden aspect-fit group">
           
           <!-- Primary Video Element -->
-          <video id="mainVideo" class="w-full h-full bg-black" playsinline controls></video>
+          <video id="mainVideo" class="w-full h-full bg-black" playsinline></video>
 
           <!-- Watermark Brand Overlay -->
           <div class="absolute top-4 right-4 pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
@@ -294,10 +294,14 @@
           <span>Ação</span>
         </div>
 
-        <!-- VIRTUAL SCROLL CONTAINER -->
+        <!-- VIRTUAL SCROLL CONTAINER (Engine for 200,000+ Items) -->
         <div id="virtualScrollContainer" class="flex-1 overflow-y-auto relative pr-1">
+          <!-- Total Scroll Placeholder Height -->
           <div id="virtualScrollPhantom" class="absolute left-0 top-0 w-full pointer-events-none" style="height: 0px;"></div>
-          <div id="virtualScrollContent" class="absolute left-0 top-0 w-full flex flex-col gap-1"></div>
+          <!-- Actual Visible Rendered Container -->
+          <div id="virtualScrollContent" class="absolute left-0 top-0 w-full flex flex-col gap-1">
+            <!-- Channels dynamically rendered via Virtual Scroll Engine -->
+          </div>
         </div>
 
         <!-- FOOTER BAR STATS -->
@@ -311,96 +315,100 @@
 
   </main>
 
+  <!-- MODAL 1: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
+  <div id="playlistModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="document.getElementById('playlistModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-xl bg-skyCyan/10 border border-skyCyan/30 flex items-center justify-center text-skyCyan">
+          <i class="fa-solid fa-list-check text-lg"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg text-white">Carregar Lista M3U / M3U8</h3>
+          <p class="text-xs text-slate-400">Processamento em chunks para listas com +200 mil canais</p>
+        </div>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex border-b border-slate-800 mb-4">
+        <button id="tabUrlBtn" class="px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan">URL Remota</button>
+        <button id="tabFileBtn" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Arquivo Local</button>
+      </div>
+
+      <!-- Tab Content: URL Input -->
+      <div id="tabUrlContent" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">URL da Lista M3U</label>
+          <input id="playlistUrlInput" type="url" placeholder="http://servidor.com/get.php?username=...&password=...&type=m3u_plus"
+            class="w-full bg-slate-950 text-xs text-white p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan">
+        </div>
+        <button id="btnLoadUrl" class="w-full bg-gradient-to-r from-skyCyan to-skyBlue text-slate-950 font-bold text-xs py-3 rounded-xl shadow-glow-cyan">
+          Carregar por URL
+        </button>
+      </div>
+
+      <!-- Tab Content: File Upload -->
+      <div id="tabFileContent" class="space-y-4 hidden">
+        <div class="border-2 border-dashed border-slate-800 hover:border-skyCyan/50 rounded-2xl p-6 text-center transition-colors">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2"></i>
+          <p class="text-xs font-semibold text-slate-300">Arraste seu arquivo .M3U aqui</p>
+          <p class="text-[11px] text-slate-500 mt-1">ou clique para selecionar do computador</p>
+          <input id="fileInput" type="file" accept=".m3u,.m3u8,.txt" class="hidden">
+          <button onclick="document.getElementById('fileInput').click()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 px-4 py-2 rounded-xl border border-slate-700">
+            Selecionar Arquivo
+          </button>
+        </div>
+      </div>
+
+      <!-- Non-blocking Parse Progress Bar -->
+      <div id="parseProgressWrap" class="mt-4 hidden space-y-2">
+        <div class="flex justify-between text-[11px]">
+          <span id="parseProgressLabel" class="text-slate-400">Processando canais...</span>
+          <span id="parseProgressPercent" class="text-skyCyan font-bold">0%</span>
+        </div>
+        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+          <div id="parseProgressBar" class="h-full bg-gradient-to-r from-skyCyan to-skyAccent w-0 transition-all duration-200"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- JAVASCRIPT APP LOGIC -->
   <script>
   (() => {
     'use strict';
 
-    // Lista Completa dos 63 Canais Oficiais da SOARES TV
-    const defaultChannels = [
-      { id: 0, name: "SBT News", group: "Notícias", url: "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8", logo: "" },
-      { id: 1, name: "Trace Brazuca HD", group: "Música", url: "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01131-tracetv-tracebrazuca-samsungbr/playlist.m3u8", logo: "" },
-      { id: 2, name: "MyTime Movie Network", group: "Filmes e séries", url: "https://appletree-mytime-samsungbrazil.amagi.tv/playlist.m3u8", logo: "" },
-      { id: 3, name: "TikTok Radio Brasil", group: "Música", url: "https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99992529", logo: "" },
-      { id: 4, name: "Rede Minas", group: "Cultura", url: "https://8hzcavccys.zoeweb.tv/redeminas/ngrp:redeminas_all/playlist.m3u8", logo: "" },
-      { id: 5, name: "Canal FDR", group: "Cultura", url: "https://v-us-01.wisestream.io/memfs/e4ade538-7924-4359-81ef-b9d4dd229e91.m3u8", logo: "" },
-      { id: 6, name: "TV Life America", group: "Entretenimento", url: "https://streaming.cloudecast.com/hls/tvlifeamerica/index.m3u8", logo: "" },
-      { id: 7, name: "STZ TV", group: "Entretenimento", url: "https://cdn.live.br1.jmvstream.com/webtv/AVJ-12952/playlist/playlist.m3u8", logo: "" },
-      { id: 8, name: "TV UFOP", group: "Cultura", url: "https://app.tvufop.com.br/hls/tvufop.m3u8", logo: "" },
-      { id: 9, name: "Aratu On", group: "Canais regionais", url: "https://cdn.live.br1.jmvstream.com/w/LVW-9359/LVW9359_XSyReL0QVf/playlist.m3u8", logo: "" },
-      { id: 10, name: "TV A Critica", group: "Canais regionais", url: "https://cdn.live.br1.jmvstream.com/w/LVW-20715/LVW20715_50E3x2MCm2/playlist.m3u8", logo: "" },
-      { id: 11, name: "Record News", group: "Notícias", url: "https://video01.soultv.com.br/recordnews/recordnews/playlist.m3u8", logo: "" },
-      { id: 12, name: "RedeTV!", group: "Variedades", url: "https://video01.soultv.com.br/redetv/redetv/playlist.m3u8", logo: "" },
-      { id: 13, name: "Jovem Pan News", group: "Notícias", url: "https://video01.soultv.com.br/jpnews/jpnews/playlist.m3u8", logo: "" },
-      { id: 14, name: "Terra Viva", group: "Agro / Variedades", url: "https://video01.soultv.com.br/terraviva/terraviva/playlist.m3u8", logo: "" },
-      { id: 15, name: "Band News", group: "Notícias", url: "https://video01.soultv.com.br/bandnews/bandnews/playlist.m3u8", logo: "" },
-      { id: 16, name: "Band Sports", group: "Esportes", url: "https://video01.soultv.com.br/bandsports/bandsports/playlist.m3u8", logo: "" },
-      { id: 17, name: "Agro Mais", group: "Agro", url: "https://video01.soultv.com.br/agromais/agromais/playlist.m3u8", logo: "" },
-      { id: 18, name: "Woohoo", group: "Esportes / Cultura", url: "https://video01.soultv.com.br/woohoo/woohoo/playlist.m3u8", logo: "" },
-      { id: 19, name: "Loading", group: "Geek / Variedades", url: "https://video01.soultv.com.br/loading/loading/playlist.m3u8", logo: "" },
-      { id: 20, name: "Music Box Brazil", group: "Música", url: "https://video01.soultv.com.br/musicboxbrazil/musicboxbrazil/playlist.m3u8", logo: "" },
-      { id: 21, name: "Prime Box Brazil", group: "Filmes", url: "https://video01.soultv.com.br/primeboxbrazil/primeboxbrazil/playlist.m3u8", logo: "" },
-      { id: 22, name: "Brasil Box Brazil", group: "Filmes", url: "https://video01.soultv.com.br/brasilboxbrazil/brasilboxbrazil/playlist.m3u8", logo: "" },
-      { id: 23, name: "Fashion TV", group: "Moda", url: "https://video01.soultv.com.br/fashiontv/fashiontv/playlist.m3u8", logo: "" },
-      { id: 24, name: "Travel Box Brazil", group: "Turismo", url: "https://video01.soultv.com.br/travelboxbrazil/travelboxbrazil/playlist.m3u8", logo: "" },
-      { id: 25, name: "Fish TV", group: "Pesca / Natureza", url: "https://video01.soultv.com.br/fishtv/fishtv/playlist.m3u8", logo: "" },
-      { id: 26, name: "Rede Brasil", group: "Variedades", url: "https://video01.soultv.com.br/rbtv/rbtv/playlist.m3u8", logo: "" },
-      { id: 27, name: "Ideal TV", group: "Variedades", url: "https://video01.soultv.com.br/idealtv/idealtv/playlist.m3u8", logo: "" },
-      { id: 28, name: "TV Aparecida", group: "Religioso", url: "https://video01.soultv.com.br/tvaparecida/tvaparecida/playlist.m3u8", logo: "" },
-      { id: 29, name: "Canal Rural", group: "Agro", url: "https://video01.soultv.com.br/canalrural/canalrural/playlist.m3u8", logo: "" },
-      { id: 30, name: "Terra Nativa", group: "Música", url: "https://video01.soultv.com.br/terranativa/terranativa/playlist.m3u8", logo: "" },
-      { id: 31, name: "Rede Vida", group: "Religioso", url: "https://video01.soultv.com.br/redevida/redevida/playlist.m3u8", logo: "" },
-      { id: 32, name: "RIT TV", group: "Religioso", url: "https://video01.soultv.com.br/rittv/rittv/playlist.m3u8", logo: "" },
-      { id: 33, name: "TV Evangelizar", group: "Religioso", url: "https://video01.soultv.com.br/tvevangelizar/tvevangelizar/playlist.m3u8", logo: "" },
-      { id: 34, name: "Canal Futura", group: "Educação", url: "https://video01.soultv.com.br/futura/futura/playlist.m3u8", logo: "" },
-      { id: 35, name: "TV Cultura", group: "Cultura", url: "https://video01.soultv.com.br/tvcultura/tvcultura/playlist.m3u8", logo: "" },
-      { id: 36, name: "TV Escola", group: "Educação", url: "https://video01.soultv.com.br/tvescola/tvescola/playlist.m3u8", logo: "" },
-      { id: 37, name: "Conexão BR", group: "Variedades", url: "https://video01.soultv.com.br/conexaobr/conexaobr/playlist.m3u8", logo: "" },
-      { id: 38, name: "PlayTV", group: "Geek / Música", url: "https://video01.soultv.com.br/playtv/playtv/playlist.m3u8", logo: "" },
-      { id: 39, name: "Box Brazil Play", group: "Filmes e Séries", url: "https://video01.soultv.com.br/boxbrazilplay/boxbrazilplay/playlist.m3u8", logo: "" },
-      { id: 40, name: "Arte 1", group: "Cultura", url: "https://video01.soultv.com.br/arte1/arte1/playlist.m3u8", logo: "" },
-      { id: 41, name: "Terraviva HD", group: "Agro", url: "https://video01.soultv.com.br/terravivahd/terravivahd/playlist.m3u8", logo: "" },
-      { id: 42, name: "Agromaishd", group: "Agro", url: "https://video01.soultv.com.br/agromaishd/agromaishd/playlist.m3u8", logo: "" },
-      { id: 43, name: "Band News HD", group: "Notícias", url: "https://video01.soultv.com.br/bandnewshd/bandnewshd/playlist.m3u8", logo: "" },
-      { id: 44, name: "Band Sports HD", group: "Esportes", url: "https://video01.soultv.com.br/bandsportshd/bandsportshd/playlist.m3u8", logo: "" },
-      { id: 45, name: "Record News HD", group: "Notícias", url: "https://video01.soultv.com.br/recordnewshd/recordnewshd/playlist.m3u8", logo: "" },
-      { id: 46, name: "RedeTV! HD", group: "Variedades", url: "https://video01.soultv.com.br/redetvhd/redetvhd/playlist.m3u8", logo: "" },
-      { id: 47, name: "TV Gazeta", group: "Variedades", url: "https://video01.soultv.com.br/tvgazeta/tvgazeta/playlist.m3u8", logo: "" },
-      { id: 48, name: "TV Diário", group: "Regionais", url: "https://video01.soultv.com.br/tvdiario/tvdiario/playlist.m3u8", logo: "" },
-      { id: 49, name: "CNT Rio", group: "Regionais", url: "https://video01.soultv.com.br/cntrio/cntrio/playlist.m3u8", logo: "" },
-      { id: 50, name: "CNT São Paulo", group: "Regionais", url: "https://video01.soultv.com.br/cntsp/cntsp/playlist.m3u8", logo: "" },
-      { id: 51, name: "Rede Família", group: "Variedades", url: "https://video01.soultv.com.br/redefamilia/redefamilia/playlist.m3u8", logo: "" },
-      { id: 52, name: "Supercanal", group: "Variedades", url: "https://video01.soultv.com.br/supercanal/supercanal/playlist.m3u8", logo: "" },
-      { id: 53, name: "TV Horizonte", group: "Cultura", url: "https://video01.soultv.com.br/tvhorizonte/tvhorizonte/playlist.m3u8", logo: "" },
-      { id: 54, name: "TV Pai Eterno", group: "Religioso", url: "https://video01.soultv.com.br/tvpaieterno/tvpaieterno/playlist.m3u8", logo: "" },
-      { id: 55, name: "Rede Boas Novas", group: "Religioso", url: "https://video01.soultv.com.br/boasnovas/boasnovas/playlist.m3u8", logo: "" },
-      { id: 56, name: "TV Novo Tempo", group: "Religioso", url: "https://video01.soultv.com.br/novotempo/novotempo/playlist.m3u8", logo: "" },
-      { id: 57, name: "Canal UOL", group: "Notícias", url: "https://video01.soultv.com.br/uol/uol/playlist.m3u8", logo: "" },
-      { id: 58, name: "Metrópoles", group: "Notícias", url: "https://video01.soultv.com.br/metropoles/metropoles/playlist.m3u8", logo: "" },
-      { id: 59, name: "CNN Brasil Web", group: "Notícias", url: "https://video01.soultv.com.br/cnn/cnn/playlist.m3u8", logo: "" },
-      { id: 60, name: "SBT Rio", group: "Canais regionais", url: "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8", logo: "" },
-      { id: 61, name: "Rede Globo (Demo HLS)", group: "Variedades", url: "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8", logo: "" },
-      { id: 62, name: "Red Bull TV", group: "Esportes / Aventura", url: "https://rbmn-live.akamaized.net/hls/live/590964/redbulltv-app/master.m3u8", logo: ""}
-    ];
-
+    // Application Global State
     const state = {
-      rawChannels: defaultChannels,
-      filteredChannels: [],
-      categories: [],
+      rawChannels: [],       // Complete parsed dataset
+      filteredChannels: [],  // Currently visible filtered view
+      categories: [],        // Sorted unique category names
       favorites: new Set(JSON.parse(localStorage.getItem('soares_favs') || '[]')),
       history: JSON.parse(localStorage.getItem('soares_history') || '[]'),
       currentIndex: -1,
       hlsInstance: null,
       mpegtsPlayer: null,
+      
+      // Aspect Ratios Configuration
       aspectRatioIndex: 0,
       aspectRatios: ['aspect-fit', 'aspect-fill', 'aspect-16-9', 'aspect-4-3'],
+      
+      // Retry Engine
       retryCount: 0,
       maxRetries: 3,
       retryTimer: null,
-      itemHeight: 52,
-      bufferItems: 12,
+
+      // Virtual Scroll Configurations (Optimized for >200,000 Items)
+      itemHeight: 52,        // Row item height in pixels
+      bufferItems: 12,       // Render buffer zone items
+      
     };
 
+    // DOM Caching
     const $ = id => document.getElementById(id);
     const dom = {
       video: $('mainVideo'),
@@ -413,32 +421,109 @@
       currentLogo: $('currentLogo'),
       statusAlert: $('playerStatusAlert'),
       statusText: $('playerStatusText'),
+      
+      // Virtual Scroll Viewport
       container: $('virtualScrollContainer'),
       phantom: $('virtualScrollPhantom'),
       content: $('virtualScrollContent'),
+      
+      // Controls & Inputs
       searchInput: $('searchInput'),
       categorySelect: $('categorySelect'),
       btnFavToggle: $('btnToggleFavorites'),
       favCurrentIcon: $('favCurrentIcon'),
       recentContainer: $('recentChannelsList'),
       muteIcon: $('muteIcon'),
+      
+      // Modals
+      playlistModal: $('playlistModal'),
     };
 
+    /* ==========================================================================
+       1. ASYNCHRONOUS NON-BLOCKING M3U PARSER FOR >200,000 CHANNELS
+       ========================================================================== */
+    async function parseM3UChunked(text, onProgress) {
+      return new Promise((resolve) => {
+        const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+        const totalLines = lines.length;
+        const channels = [];
+        
+        let meta = null;
+        let lineIdx = 0;
+        const chunkSize = 12000; // Lines processed per async tick
+
+        function processChunk() {
+          const end = Math.min(lineIdx + chunkSize, totalLines);
+          
+          for (; lineIdx < end; lineIdx++) {
+            const line = lines[lineIdx].trim();
+            if (!line) continue;
+
+            if (line.startsWith('#EXTINF:')) {
+              const commaIdx = line.indexOf(',');
+              const attrs = commaIdx >= 0 ? line.slice(8, commaIdx) : line.slice(8);
+              const name = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : 'Canal Sem Nome';
+
+              const logoMatch = attrs.match(/tvg-logo="([^"]*)"/i);
+              const groupMatch = attrs.match(/group-title="([^"]*)"/i);
+
+              meta = {
+                id: channels.length,
+                name: name || 'Canal Desconhecido',
+                logo: logoMatch ? logoMatch[1] : '',
+                group: groupMatch ? groupMatch[1] : 'Outros / Gerais'
+              };
+            } else if (!line.startsWith('#') && meta) {
+              if (/^https?:\/\//i.test(line)) {
+                meta.url = line;
+                channels.push(meta);
+              }
+              meta = null;
+            }
+          }
+
+          if (onProgress) {
+            onProgress(Math.min(100, Math.round((lineIdx / totalLines) * 100)));
+          }
+
+          if (lineIdx < totalLines) {
+            // Yield execution to preserve browser responsiveness
+            if ('requestIdleCallback' in window) {
+              requestIdleCallback(processChunk);
+            } else {
+              setTimeout(processChunk, 0);
+            }
+          } else {
+            resolve(channels);
+          }
+        }
+
+        processChunk();
+      });
+    }
+
+    /* ==========================================================================
+       2. VIRTUAL SCROLLING ENGINE (SILKY 60FPS FOR MASSIVE DOMS)
+       ========================================================================== */
     function updateVirtualScroll() {
       const total = state.filteredChannels.length;
       const containerHeight = dom.container.clientHeight || 500;
       const scrollTop = dom.container.scrollTop;
 
+      // Update phantom element height
       dom.phantom.style.height = `${total * state.itemHeight}px`;
 
+      // Calculate active visible row bounds
       let startIndex = Math.floor(scrollTop / state.itemHeight) - state.bufferItems;
       let endIndex = Math.ceil((scrollTop + containerHeight) / state.itemHeight) + state.bufferItems;
 
       startIndex = Math.max(0, startIndex);
       endIndex = Math.min(total, endIndex);
 
+      // Offset visible element container
       dom.content.style.transform = `translateY(${startIndex * state.itemHeight}px)`;
 
+      // Build visible DOM row nodes
       let html = '';
       for (let i = startIndex; i < endIndex; i++) {
         const item = state.filteredChannels[i];
@@ -491,6 +576,9 @@
       `;
     }
 
+    /* ==========================================================================
+       3. FAST FILTERING & PRE-INDEXED SEARCH ENGINE
+       ========================================================================== */
     function applyFilters() {
       const query = dom.searchInput.value.trim().toLowerCase();
       const selectedCat = dom.categorySelect.value;
@@ -516,6 +604,9 @@
       updateVirtualScroll();
     }
 
+    /* ==========================================================================
+       4. PRO MEDIA PLAYER ENGINE & AUTOMATIC RETRY SYSTEM
+       ========================================================================== */
     function stopCurrentPlayers() {
       if (state.hlsInstance) {
         try { state.hlsInstance.destroy(); } catch (_) {}
@@ -566,6 +657,7 @@
       video.removeAttribute('src');
       video.load();
 
+      // Passando pelo proxy da Vercel para rodar em HTTPS sem bloqueio
       const rawUrl = channel.url.trim();
       const url = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
       
@@ -691,19 +783,7 @@
       return (name || 'TV').trim().charAt(0).toUpperCase();
     }
 
-    function populateCategories() {
-      const catSet = new Set();
-      state.rawChannels.forEach(c => catSet.add(c.group || 'Outros / Gerais'));
-      state.categories = Array.from(catSet).sort();
-
-      let html = `<option value="">Todas as Categorias (${state.rawChannels.length})</option>`;
-      state.categories.forEach(cat => {
-        html += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`;
-      });
-      dom.categorySelect.innerHTML = html;
-      $('headerChannelCount').textContent = state.rawChannels.length.toLocaleString();
-    }
-
+    // Event Bindings
     dom.searchInput.addEventListener('input', applyFilters);
     dom.categorySelect.addEventListener('change', applyFilters);
     dom.container.addEventListener('scroll', updateVirtualScroll);
@@ -753,9 +833,25 @@
       } catch (_) {}
     });
 
+    // Cole aqui seus canais originais caso precise atualizar a matriz, ou deixe vazio se carregar por outro método
+    state.rawChannels = [];
+
     populateCategories();
     applyFilters();
     renderHistory();
+
+    function populateCategories() {
+      const catSet = new Set();
+      state.rawChannels.forEach(c => catSet.add(c.group || 'Outros / Gerais'));
+      state.categories = Array.from(catSet).sort();
+
+      let html = `<option value="">Todas as Categorias (${state.rawChannels.length})</option>`;
+      state.categories.forEach(cat => {
+        html += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`;
+      });
+      dom.categorySelect.innerHTML = html;
+      $('headerChannelCount').textContent = state.rawChannels.length.toLocaleString();
+    }
 
     window.SOARES_APP = {
       playChannel,
