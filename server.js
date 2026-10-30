@@ -7,7 +7,6 @@ const http = require('http');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Agentes para ignorar erros de certificado em servidores HTTP/HTTPS antigos
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 const httpAgent = new http.Agent({ keepAlive: true });
 
@@ -21,6 +20,8 @@ app.get('/api/proxy', async (req, res) => {
 
   try {
     const isHttps = targetUrl.startsWith('https');
+    
+    // Disfarce avançado: finge ser um player VLC/IPTV dedicado para liberar streams protegidos
     const response = await axios({
       method: 'GET',
       url: targetUrl,
@@ -28,9 +29,10 @@ app.get('/api/proxy', async (req, res) => {
       httpAgent: httpAgent,
       httpsAgent: isHttps ? httpsAgent : undefined,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': new URL(targetUrl).origin,
-        'Accept': '*/*'
+        'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
+        'Accept': '*/*',
+        'Connection': 'keep-alive',
+        'Icy-Metadata': '1'
       },
       timeout: 25000
     });
