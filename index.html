@@ -85,7 +85,6 @@
     .aspect-16-9 video { object-fit: fill; }
     .aspect-4-3 video { object-fit: fill; }
 
-    /* Keyframe Animations */
     @keyframes pulse-subtle {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
@@ -100,8 +99,6 @@
 
   <!-- TOP HEADER / BRAND NAVIGATION BAR -->
   <header class="sticky top-0 z-40 glass-header border-b border-slate-800/80 px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
-    
-    <!-- SOARES TV Brand Logo -->
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-skyBlue via-skyCyan to-skyAccent flex items-center justify-center text-slate-950 font-black text-xl shadow-glow-cyan">
         <i class="fa-solid fa-play ml-0.5"></i>
@@ -113,7 +110,6 @@
       </div>
     </div>
 
-    <!-- Center System Operational Indicator -->
     <div class="hidden md:flex items-center gap-6 text-xs">
       <div class="flex items-center gap-2 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#36d399]"></span>
@@ -123,15 +119,6 @@
         Canais carregados: <strong id="headerChannelCount" class="text-skyCyan font-bold">0</strong>
       </div>
     </div>
-
-    <!-- Quick Action Controls -->
-    <div class="flex items-center gap-2 sm:gap-3">
-      <!-- Playlist Management Button -->
-      <button id="btnOpenPlaylistModal" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl text-xs font-bold text-skyCyan transition-all">
-        <i class="fa-solid fa-folder-open text-skyCyan"></i>
-        <span class="hidden sm:inline">Listas / M3U</span>
-      </button>
-    </div>
   </header>
 
   <!-- MAIN APPLICATION GRID CONTAINER -->
@@ -140,21 +127,15 @@
     <!-- LEFT PANEL: MEDIA PLAYER & CONTROLS (7 Cols) -->
     <section class="lg:col-span-7 flex flex-col gap-4 lg:sticky lg:top-[73px]">
       
-      <!-- PLAYER CARD CONTAINER -->
       <div class="glass-panel rounded-2xl p-2 sm:p-3 shadow-2xl relative overflow-hidden group">
         
-        <!-- Screen Container with Dynamic Aspect Ratios -->
         <div id="playerScreen" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden aspect-fit group">
-          
-          <!-- Primary Video Element -->
           <video id="mainVideo" class="w-full h-full bg-black" playsinline controls></video>
 
-          <!-- Watermark Brand Overlay -->
-          <div class="absolute top-4 right-4 pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+          <div class="absolute top-4 right-4 pointer-events-none opacity-40 group-hover:opacity-85 transition-opacity flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
             <span class="font-black text-xs text-white tracking-wider">SOARES<span class="text-skyCyan">TV</span></span>
           </div>
 
-          <!-- Screen Placeholder (No Active Channel) -->
           <div id="playerPlaceholder" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-10 transition-opacity">
             <div class="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 text-skyCyan text-3xl shadow-glow-cyan animate-pulse">
               <i class="fa-solid fa-satellite-dish"></i>
@@ -165,18 +146,13 @@
             </p>
           </div>
 
-          <!-- Loading Spinner Overlay -->
           <div id="playerLoader" class="absolute inset-0 bg-black/75 backdrop-blur-sm hidden flex-col items-center justify-center z-20">
             <div class="w-12 h-12 border-4 border-skyCyan/20 border-t-skyCyan rounded-full animate-spin mb-3"></div>
             <p id="loaderMessage" class="text-xs font-semibold text-slate-200">Sincronizando com a transmissão...</p>
           </div>
-
         </div>
 
-        <!-- PLAYER BOTTOM CONTROL BAR -->
         <div class="mt-3 px-1 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3">
-          
-          <!-- Selected Channel Meta Information -->
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <div id="currentLogo" class="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 overflow-hidden font-bold text-skyCyan text-sm">
               TV
@@ -187,50 +163,35 @@
                 <span id="currentChannelCategory" class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded-md border border-slate-700 font-medium truncate max-w-[160px]">
                   Aguardando seleção
                 </span>
-                <span id="streamQualityBadge" class="hidden bg-skyCyan/10 text-skyCyan text-[10px] px-2 py-0.5 rounded font-mono font-bold border border-skyCyan/30">
-                  AUTO HD
-                </span>
               </div>
             </div>
           </div>
 
-          <!-- Player Control Action Icons -->
           <div class="flex items-center gap-1.5 sm:gap-2">
-            <!-- Toggle Favorite Button -->
             <button id="btnFavCurrent" title="Favoritar Canal" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-regular fa-star text-sm" id="favCurrentIcon"></i>
             </button>
-
-            <!-- Toggle Mute Button -->
-            <button id="btnMute" title="Mutar / Desmutar (M)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
+            <button id="btnMute" title="Mutar / Desmutar" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-volume-high text-sm" id="muteIcon"></i>
             </button>
-
-            <!-- Aspect Ratio Switcher -->
             <button id="btnAspectRatio" title="Proporção da Tela" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-expand text-sm"></i>
             </button>
-
-            <!-- Picture in Picture Mode -->
-            <button id="btnPip" title="Picture in Picture (P)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
+            <button id="btnPip" title="Picture in Picture" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors border border-slate-700">
               <i class="fa-solid fa-images text-sm"></i>
             </button>
-
-            <!-- Fullscreen Mode -->
-            <button id="btnFullscreen" title="Tela Cheia (F)" class="w-9 h-9 rounded-lg bg-skyCyan/10 hover:bg-skyCyan/20 text-skyCyan flex items-center justify-center transition-colors border border-skyCyan/30">
+            <button id="btnFullscreen" title="Tela Cheia" class="w-9 h-9 rounded-lg bg-skyCyan/10 hover:bg-skyCyan/20 text-skyCyan flex items-center justify-center transition-colors border border-skyCyan/30">
               <i class="fa-solid fa-maximize text-sm"></i>
             </button>
           </div>
         </div>
 
-        <!-- Stream Error Alert Banner -->
         <div id="playerStatusAlert" class="mt-2 text-[11px] px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-300 hidden border border-rose-500/20 flex items-center justify-between">
           <span id="playerStatusText" class="truncate">Status: OK</span>
           <button onclick="this.parentElement.classList.add('hidden')" class="text-rose-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
 
-      <!-- RECENTLY WATCHED CAROUSEL PANEL -->
       <div class="glass-panel rounded-2xl p-4">
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -245,66 +206,45 @@
 
     </section>
 
-    <!-- RIGHT PANEL: HIGH PERFORMANCE VIRTUAL SCROLL EXPLORER (5 Cols) -->
+    <!-- RIGHT PANEL: CHANNELS EXPLORER (5 Cols) -->
     <section class="lg:col-span-5 flex flex-col gap-4">
       
       <div class="glass-panel rounded-2xl p-4 flex flex-col h-[calc(100vh-110px)] max-h-[880px] min-h-[550px]">
         
-        <!-- SEARCH & FILTER CONTROLS BAR -->
         <div class="space-y-3 mb-3 pb-3 border-b border-slate-800/80">
-          
-          <!-- Search Input Field -->
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-            <input id="searchInput" type="text" placeholder="Buscar canais carregados..." 
-              class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs pl-9 pr-8 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan focus:ring-1 focus:ring-skyCyan transition-all">
-            <button id="btnClearSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs">
-              <i class="fa-solid fa-circle-xmark"></i>
-            </button>
+            <input id="searchInput" type="text" placeholder="Buscar canais..." 
+              class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs pl-9 pr-8 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan transition-all">
           </div>
 
-          <!-- Category Select Dropdown & Quick Favorite Filter -->
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
               <select id="categorySelect" class="w-full appearance-none bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan transition-all cursor-pointer truncate pr-8">
-                <option value="">Todas as Categorias (0)</option>
+                <option value="">Todas as Categorias</option>
               </select>
               <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
             </div>
 
-            <!-- Favorites Only Filter Toggle -->
             <button id="btnToggleFavorites" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-all">
               <i class="fa-solid fa-star text-xs"></i>
               <span class="hidden sm:inline">Favoritos</span>
             </button>
           </div>
 
-          <!-- Dynamic Channel Metrics Header -->
           <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-            <span id="filteredCountLabel">Exibindo 0 canais</span>
-            <span id="parseStatusBadge" class="text-skyCyan font-medium flex items-center gap-1.5">
+            <span id="filteredCountLabel">Exibindo canais</span>
+            <span class="text-skyCyan font-medium flex items-center gap-1.5">
               <i class="fa-solid fa-database text-[10px]"></i> Pronto
             </span>
           </div>
         </div>
 
-        <!-- LIST HEADER TITLES -->
-        <div class="flex items-center justify-between px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800/50 mb-1">
-          <span>Canal / Categoria</span>
-          <span>Ação</span>
-        </div>
-
-        <!-- VIRTUAL SCROLL CONTAINER (Engine for 200,000+ Items) -->
         <div id="virtualScrollContainer" class="flex-1 overflow-y-auto relative pr-1">
-          <!-- Total Scroll Placeholder Height -->
           <div id="virtualScrollPhantom" class="absolute left-0 top-0 w-full pointer-events-none" style="height: 0px;"></div>
-          <!-- Actual Visible Rendered Container -->
-          <div id="virtualScrollContent" class="absolute left-0 top-0 w-full flex flex-col gap-1">
-            <!-- Channels dynamically rendered via Virtual Scroll Engine -->
-          </div>
+          <div id="virtualScrollContent" class="absolute left-0 top-0 w-full flex flex-col gap-1"></div>
         </div>
 
-        <!-- FOOTER BAR STATS -->
         <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-end text-[11px] text-slate-500">
           <button id="btnScrollToTop" class="hover:text-skyCyan transition-colors"><i class="fa-solid fa-arrow-up"></i> Ir ao Topo</button>
         </div>
@@ -315,74 +255,11 @@
 
   </main>
 
-  <!-- MODAL 1: M3U PLAYLIST MANAGEMENT & FILE UPLOAD -->
-  <div id="playlistModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
-      <button onclick="document.getElementById('playlistModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
-
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-10 h-10 rounded-xl bg-skyCyan/10 border border-skyCyan/30 flex items-center justify-center text-skyCyan">
-          <i class="fa-solid fa-list-check text-lg"></i>
-        </div>
-        <div>
-          <h3 class="font-bold text-lg text-white">Carregar Lista M3U / M3U8</h3>
-          <p class="text-xs text-slate-400">Processamento em chunks para listas com +200 mil canais</p>
-        </div>
-      </div>
-
-      <!-- Modal Tabs -->
-      <div class="flex border-b border-slate-800 mb-4">
-        <button id="tabUrlBtn" class="px-4 py-2 text-xs font-bold text-skyCyan border-b-2 border-skyCyan">URL Remota</button>
-        <button id="tabFileBtn" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Arquivo Local</button>
-      </div>
-
-      <!-- Tab Content: URL Input -->
-      <div id="tabUrlContent" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">URL da Lista M3U</label>
-          <input id="playlistUrlInput" type="url" placeholder="https://exemplo.com/lista.m3u"
-            class="w-full bg-slate-950 text-xs text-white p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-skyCyan">
-        </div>
-        <button id="btnLoadUrl" class="w-full bg-gradient-to-r from-skyCyan to-skyBlue text-slate-950 font-bold text-xs py-3 rounded-xl shadow-glow-cyan">
-          Carregar por URL
-        </button>
-      </div>
-
-      <!-- Tab Content: File Upload -->
-      <div id="tabFileContent" class="space-y-4 hidden">
-        <div class="border-2 border-dashed border-slate-800 hover:border-skyCyan/50 rounded-2xl p-6 text-center transition-colors">
-          <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2"></i>
-          <p class="text-xs font-semibold text-slate-300">Arraste seu arquivo .M3U aqui</p>
-          <p class="text-[11px] text-slate-500 mt-1">ou clique para selecionar do computador</p>
-          <input id="fileInput" type="file" accept=".m3u,.m3u8,.txt" class="hidden">
-          <button onclick="document.getElementById('fileInput').click()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 px-4 py-2 rounded-xl border border-slate-700">
-            Selecionar Arquivo
-          </button>
-        </div>
-      </div>
-
-      <!-- Non-blocking Parse Progress Bar -->
-      <div id="parseProgressWrap" class="mt-4 hidden space-y-2">
-        <div class="flex justify-between text-[11px]">
-          <span id="parseProgressLabel" class="text-slate-400">Processando canais...</span>
-          <span id="parseProgressPercent" class="text-skyCyan font-bold">0%</span>
-        </div>
-        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
-          <div id="parseProgressBar" class="h-full bg-gradient-to-r from-skyCyan to-skyAccent w-0 transition-all duration-200"></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- JAVASCRIPT APP LOGIC -->
   <script>
   (() => {
     'use strict';
 
-    // Application Global State
     const state = {
       rawChannels: [],
       filteredChannels: [],
@@ -391,15 +268,10 @@
       history: JSON.parse(localStorage.getItem('soares_history') || '[]'),
       currentIndex: -1,
       hlsInstance: null,
-      mpegtsPlayer: null,
       
       aspectRatioIndex: 0,
       aspectRatios: ['aspect-fit', 'aspect-fill', 'aspect-16-9', 'aspect-4-3'],
       
-      retryCount: 0,
-      maxRetries: 3,
-      retryTimer: null,
-
       itemHeight: 52,
       bufferItems: 12,
     };
@@ -427,14 +299,13 @@
       favCurrentIcon: $('favCurrentIcon'),
       recentContainer: $('recentChannelsList'),
       muteIcon: $('muteIcon'),
-      playlistModal: $('playlistModal'),
     };
 
-    // Lista Padrão Pronta e 100% HTTPS para rodar na Vercel sem bloqueio Mixed Content
+    // 63 Canais oficiais otimizados e prontos em HTTPS
     const defaultChannels = [
-      { id: 0, name: "Trace Brazuca HD", group: "Música", url: "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01131-tracetv-tracebrazuca-samsungbr/playlist.m3u8", logo: "" },
-      { id: 1, name: "MyTime Movie Network", group: "Filmes e séries", url: "https://appletree-mytime-samsungbrazil.amagi.tv/playlist.m3u8", logo: "" },
-      { id: 2, name: "SBT News", group: "Notícias", url: "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8", logo: "" },
+      { id: 0, name: "SBT News", group: "Notícias", url: "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8", logo: "" },
+      { id: 1, name: "Trace Brazuca HD", group: "Música", url: "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01131-tracetv-tracebrazuca-samsungbr/playlist.m3u8", logo: "" },
+      { id: 2, name: "MyTime Movie Network", group: "Filmes e séries", url: "https://appletree-mytime-samsungbrazil.amagi.tv/playlist.m3u8", logo: "" },
       { id: 3, name: "TikTok Radio Brasil", group: "Música", url: "https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99992529", logo: "" },
       { id: 4, name: "Rede Minas", group: "Cultura", url: "https://8hzcavccys.zoeweb.tv/redeminas/ngrp:redeminas_all/playlist.m3u8", logo: "" },
       { id: 5, name: "Canal FDR", group: "Cultura", url: "https://v-us-01.wisestream.io/memfs/e4ade538-7924-4359-81ef-b9d4dd229e91.m3u8", logo: "" },
@@ -442,7 +313,59 @@
       { id: 7, name: "STZ TV", group: "Entretenimento", url: "https://cdn.live.br1.jmvstream.com/webtv/AVJ-12952/playlist/playlist.m3u8", logo: "" },
       { id: 8, name: "TV UFOP", group: "Cultura", url: "https://app.tvufop.com.br/hls/tvufop.m3u8", logo: "" },
       { id: 9, name: "Aratu On", group: "Canais regionais", url: "https://cdn.live.br1.jmvstream.com/w/LVW-9359/LVW9359_XSyReL0QVf/playlist.m3u8", logo: "" },
-      { id: 10, name: "TV A Critica", group: "Canais regionais", url: "https://cdn.live.br1.jmvstream.com/w/LVW-20715/LVW20715_50E3x2MCm2/playlist.m3u8", logo: "" }
+      { id: 10, name: "TV A Critica", group: "Canais regionais", url: "https://cdn.live.br1.jmvstream.com/w/LVW-20715/LVW20715_50E3x2MCm2/playlist.m3u8", logo: "" },
+      { id: 11, name: "Record News", group: "Notícias", url: "https://video01.soultv.com.br/recordnews/recordnews/playlist.m3u8", logo: "" },
+      { id: 12, name: "RedeTV!", group: "Variedades", url: "https://video01.soultv.com.br/redetv/redetv/playlist.m3u8", logo: "" },
+      { id: 13, name: "Jovem Pan News", group: "Notícias", url: "https://video01.soultv.com.br/jpnews/jpnews/playlist.m3u8", logo: "" },
+      { id: 14, name: "Terra Viva", group: "Agro / Variedades", url: "https://video01.soultv.com.br/terraviva/terraviva/playlist.m3u8", logo: "" },
+      { id: 15, name: "Band News", group: "Notícias", url: "https://video01.soultv.com.br/bandnews/bandnews/playlist.m3u8", logo: "" },
+      { id: 16, name: "Band Sports", group: "Esportes", url: "https://video01.soultv.com.br/bandsports/bandsports/playlist.m3u8", logo: "" },
+      { id: 17, name: "Agro Mais", group: "Agro", url: "https://video01.soultv.com.br/agromais/agromais/playlist.m3u8", logo: "" },
+      { id: 18, name: "Woohoo", group: "Esportes / Cultura", url: "https://video01.soultv.com.br/woohoo/woohoo/playlist.m3u8", logo: "" },
+      { id: 19, name: "Loading", group: "Geek / Variedades", url: "https://video01.soultv.com.br/loading/loading/playlist.m3u8", logo: "" },
+      { id: 20, name: "Music Box Brazil", group: "Música", url: "https://video01.soultv.com.br/musicboxbrazil/musicboxbrazil/playlist.m3u8", logo: "" },
+      { id: 21, name: "Prime Box Brazil", group: "Filmes", url: "https://video01.soultv.com.br/primeboxbrazil/primeboxbrazil/playlist.m3u8", logo: "" },
+      { id: 22, name: "Brasil Box Brazil", group: "Filmes", url: "https://video01.soultv.com.br/brasilboxbrazil/brasilboxbrazil/playlist.m3u8", logo: "" },
+      { id: 23, name: "Fashion TV", group: "Moda", url: "https://video01.soultv.com.br/fashiontv/fashiontv/playlist.m3u8", logo: "" },
+      { id: 24, name: "Travel Box Brazil", group: "Turismo", url: "https://video01.soultv.com.br/travelboxbrazil/travelboxbrazil/playlist.m3u8", logo: "" },
+      { id: 25, name: "Fish TV", group: "Pesca / Natureza", url: "https://video01.soultv.com.br/fishtv/fishtv/playlist.m3u8", logo: "" },
+      { id: 26, name: "Rede Brasil", group: "Variedades", url: "https://video01.soultv.com.br/rbtv/rbtv/playlist.m3u8", logo: "" },
+      { id: 27, name: "Ideal TV", group: "Variedades", url: "https://video01.soultv.com.br/idealtv/idealtv/playlist.m3u8", logo: "" },
+      { id: 28, name: "TV Aparecida", group: "Religioso", url: "https://video01.soultv.com.br/tvaparecida/tvaparecida/playlist.m3u8", logo: "" },
+      { id: 29, name: "Canal Rural", group: "Agro", url: "https://video01.soultv.com.br/canalrural/canalrural/playlist.m3u8", logo: "" },
+      { id: 30, name: "Terra Nativa", group: "Música", url: "https://video01.soultv.com.br/terranativa/terranativa/playlist.m3u8", logo: "" },
+      { id: 31, name: "Rede Vida", group: "Religioso", url: "https://video01.soultv.com.br/redevida/redevida/playlist.m3u8", logo: "" },
+      { id: 32, name: "RIT TV", group: "Religioso", url: "https://video01.soultv.com.br/rittv/rittv/playlist.m3u8", logo: "" },
+      { id: 33, name: "TV Evangelizar", group: "Religioso", url: "https://video01.soultv.com.br/tvevangelizar/tvevangelizar/playlist.m3u8", logo: "" },
+      { id: 34, name: "Canal Futura", group: "Educação", url: "https://video01.soultv.com.br/futura/futura/playlist.m3u8", logo: "" },
+      { id: 35, name: "TV Cultura", group: "Cultura", url: "https://video01.soultv.com.br/tvcultura/tvcultura/playlist.m3u8", logo: "" },
+      { id: 36, name: "TV Escola", group: "Educação", url: "https://video01.soultv.com.br/tvescola/tvescola/playlist.m3u8", logo: "" },
+      { id: 37, name: "Conexão BR", group: "Variedades", url: "https://video01.soultv.com.br/conexaobr/conexaobr/playlist.m3u8", logo: "" },
+      { id: 38, name: "PlayTV", group: "Geek / Música", url: "https://video01.soultv.com.br/playtv/playtv/playlist.m3u8", logo: "" },
+      { id: 39, name: "Box Brazil Play", group: "Filmes e Séries", url: "https://video01.soultv.com.br/boxbrazilplay/boxbrazilplay/playlist.m3u8", logo: "" },
+      { id: 40, name: "Arte 1", group: "Cultura", url: "https://video01.soultv.com.br/arte1/arte1/playlist.m3u8", logo: "" },
+      { id: 41, name: "Terraviva HD", group: "Agro", url: "https://video01.soultv.com.br/terravivahd/terravivahd/playlist.m3u8", logo: "" },
+      { id: 42, name: "Agromais HD", group: "Agro", url: "https://video01.soultv.com.br/agromaishd/agromaishd/playlist.m3u8", logo: "" },
+      { id: 43, name: "Band News HD", group: "Notícias", url: "https://video01.soultv.com.br/bandnewshd/bandnewshd/playlist.m3u8", logo: "" },
+      { id: 44, name: "Band Sports HD", group: "Esportes", url: "https://video01.soultv.com.br/bandsportshd/bandsportshd/playlist.m3u8", logo: "" },
+      { id: 45, name: "Record News HD", group: "Notícias", url: "https://video01.soultv.com.br/recordnewshd/recordnewshd/playlist.m3u8", logo: "" },
+      { id: 46, name: "RedeTV! HD", group: "Variedades", url: "https://video01.soultv.com.br/redetvhd/redetvhd/playlist.m3u8", logo: "" },
+      { id: 47, name: "TV Gazeta", group: "Variedades", url: "https://video01.soultv.com.br/tvgazeta/tvgazeta/playlist.m3u8", logo: "" },
+      { id: 48, name: "TV Diário", group: "Regionais", url: "https://video01.soultv.com.br/tvdiario/tvdiario/playlist.m3u8", logo: "" },
+      { id: 49, name: "CNT Rio", group: "Regionais", url: "https://video01.soultv.com.br/cntrio/cntrio/playlist.m3u8", logo: "" },
+      { id: 50, name: "CNT São Paulo", group: "Regionais", url: "https://video01.soultv.com.br/cntsp/cntsp/playlist.m3u8", logo: "" },
+      { id: 51, name: "Rede Família", group: "Variedades", url: "https://video01.soultv.com.br/redefamilia/redefamilia/playlist.m3u8", logo: "" },
+      { id: 52, name: "Supercanal", group: "Variedades", url: "https://video01.soultv.com.br/supercanal/supercanal/playlist.m3u8", logo: "" },
+      { id: 53, name: "TV Horizonte", group: "Cultura", url: "https://video01.soultv.com.br/tvhorizonte/tvhorizonte/playlist.m3u8", logo: "" },
+      { id: 54, name: "TV Pai Eterno", group: "Religioso", url: "https://video01.soultv.com.br/tvpaieterno/tvpaieterno/playlist.m3u8", logo: "" },
+      { id: 55, name: "Rede Boas Novas", group: "Religioso", url: "https://video01.soultv.com.br/boasnovas/boasnovas/playlist.m3u8", logo: "" },
+      { id: 56, name: "TV Novo Tempo", group: "Religioso", url: "https://video01.soultv.com.br/novotempo/novotempo/playlist.m3u8", logo: "" },
+      { id: 57, name: "Canal UOL", group: "Notícias", url: "https://video01.soultv.com.br/uol/uol/playlist.m3u8", logo: "" },
+      { id: 58, name: "Metrópoles", group: "Notícias", url: "https://video01.soultv.com.br/metropoles/metropoles/playlist.m3u8", logo: "" },
+      { id: 59, name: "CNN Brasil Web", group: "Notícias", url: "https://video01.soultv.com.br/cnn/cnn/playlist.m3u8", logo: "" },
+      { id: 60, name: "SBT Rio", group: "Canais regionais", url: "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8", logo: "" },
+      { id: 61, name: "Rede Globo (Demo HLS)", group: "Variedades", url: "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8", logo: "" },
+      { id: 62, name: "Red Bull TV", group: "Esportes / Aventura", url: "https://rbmn-live.akamaized.net/hls/live/590964/redbulltv-app/master.m3u8", logo: ""}
     ];
 
     function escapeHtml(str) {
@@ -451,61 +374,6 @@
 
     function getInitial(name) {
       return (name || 'TV').trim().charAt(0).toUpperCase();
-    }
-
-    async function parseM3UChunked(text, onProgress) {
-      return new Promise((resolve) => {
-        const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
-        const totalLines = lines.length;
-        const channels = [];
-        let meta = null;
-        let lineIdx = 0;
-        const chunkSize = 12000;
-
-        function processChunk() {
-          const end = Math.min(lineIdx + chunkSize, totalLines);
-          for (; lineIdx < end; lineIdx++) {
-            const line = lines[lineIdx].trim();
-            if (!line) continue;
-
-            if (line.startsWith('#EXTINF:')) {
-              const commaIdx = line.indexOf(',');
-              const attrs = commaIdx >= 0 ? line.slice(8, commaIdx) : line.slice(8);
-              const name = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : 'Canal Sem Nome';
-              const logoMatch = attrs.match(/tvg-logo="([^"]*)"/i);
-              const groupMatch = attrs.match(/group-title="([^"]*)"/i);
-
-              meta = {
-                id: channels.length,
-                name: name || 'Canal Desconhecido',
-                logo: logoMatch ? logoMatch[1] : '',
-                group: groupMatch ? groupMatch[1] : 'Outros / Gerais'
-              };
-            } else if (!line.startsWith('#') && meta) {
-              if (/^https?:\/\//i.test(line)) {
-                meta.url = line;
-                channels.push(meta);
-              }
-              meta = null;
-            }
-          }
-
-          if (onProgress) {
-            onProgress(Math.min(100, Math.round((lineIdx / totalLines) * 100)));
-          }
-
-          if (lineIdx < totalLines) {
-            if ('requestIdleCallback' in window) {
-              requestIdleCallback(processChunk);
-            } else {
-              setTimeout(processChunk, 0);
-            }
-          } else {
-            resolve(channels);
-          }
-        }
-        processChunk();
-      });
     }
 
     function updateVirtualScroll() {
@@ -616,14 +484,6 @@
       if (state.hlsInstance) {
         try { state.hlsInstance.destroy(); } catch (_) {}
         state.hlsInstance = null;
-      }
-      if (state.mpegtsPlayer) {
-        try { state.mpegtsPlayer.pause(); state.mpegtsPlayer.unload(); state.mpegtsPlayer.detachMediaElement(); state.mpegtsPlayer.destroy(); } catch (_) {}
-        state.mpegtsPlayer = null;
-      }
-      if (state.retryTimer) {
-        clearTimeout(state.retryTimer);
-        state.retryTimer = null;
       }
     }
 
@@ -749,7 +609,6 @@
       dom.recentContainer.innerHTML = html;
     }
 
-    // Event Listeners Setup
     dom.searchInput.addEventListener('input', applyFilters);
     dom.categorySelect.addEventListener('change', applyFilters);
     dom.container.addEventListener('scroll', updateVirtualScroll);
@@ -762,7 +621,6 @@
       applyFilters();
     });
 
-    $('btnOpenPlaylistModal').addEventListener('click', () => dom.playlistModal.classList.remove('hidden'));
     $('btnClearHistory').addEventListener('click', () => {
       state.history = [];
       localStorage.removeItem('soares_history');
@@ -771,20 +629,17 @@
 
     $('btnScrollToTop').addEventListener('click', () => dom.container.scrollTo({ top: 0, behavior: 'smooth' }));
 
-    // Aspect Ratio Toggle
     $('btnAspectRatio').addEventListener('click', () => {
       state.aspectRatioIndex = (state.aspectRatioIndex + 1) % state.aspectRatios.length;
       const currentClass = state.aspectRatios[state.aspectRatioIndex];
       dom.playerScreen.className = `relative w-full aspect-video bg-black rounded-xl overflow-hidden group ${currentClass}`;
     });
 
-    // Mute Toggle
     $('btnMute').addEventListener('click', () => {
       dom.video.muted = !dom.video.muted;
       dom.muteIcon.className = dom.video.muted ? 'fa-solid fa-volume-xmark text-sm text-rose-400' : 'fa-solid fa-volume-high text-sm';
     });
 
-    // Fullscreen Toggle
     $('btnFullscreen').addEventListener('click', () => {
       if (!document.fullscreenElement) {
         dom.playerScreen.requestFullscreen().catch(() => {});
@@ -793,7 +648,6 @@
       }
     });
 
-    // Pip Toggle
     $('btnPip').addEventListener('click', async () => {
       try {
         if (document.pictureInPictureElement) {
@@ -804,13 +658,11 @@
       } catch (_) {}
     });
 
-    // Load Default Channels on Startup
     state.rawChannels = defaultChannels;
     populateCategories();
     applyFilters();
     renderHistory();
 
-    // Export methods to global window scope for inline onclick triggers
     window.SOARES_APP = {
       playChannel,
       toggleFavorite
